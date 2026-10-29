@@ -1,0 +1,82 @@
+{
+  "name": "Clean",
+  "input_gain": 0,
+  "output_gain": 0,
+  "chain": [
+    {
+      "id": "b1",
+      "type": "gate",
+      "on": true,
+      "params": {
+        "thresh": -65
+      }
+    },
+    {
+      "id": "b2",
+      "type": "comp",
+      "on": true,
+      "params": {
+        "thresh": -24,
+        "ratio": 3,
+        "makeup": 3
+      }
+    },
+    {
+      "id": "b3",
+      "type": "nam",
+      "on": true,
+      "params": {
+        "input": -6,
+        "output": 0
+      },
+      "file": "_test_NAM_example_A2.nam"
+    },
+    {
+      "id": "b4",
+      "type": "ir",
+      "on": true,
+      "params": {
+        "length": 100
+      },
+      "file": "synth_4x12_test.wav"
+    },
+    {
+      "id": "b5",
+      "type": "eq",
+      "on": true,
+      "params": {
+        "low": 1,
+        "hmgain": 2
+      }
+    },
+    {
+      "id": "b6",
+      "type": "chorus",
+      "on": false,
+      "params": {
+        "mix": 40
+      }
+    },
+    {
+      "id": "b7",
+      "type": "delay",
+      "on": true,
+      "params": {
+        "time": 420,
+        "feedback": 30,
+        "mix": 22
+      }
+    },
+    {
+      "id": "b8",
+      "type": "reverb",
+      "on": true,
+      "params": {
+        "type": 1,
+        "mix": 22
+      }
+    }
+  ],
+  "scenes": [],
+  "scene": -1
+}

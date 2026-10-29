@@ -1,0 +1,66 @@
+{
+  "pack": "namfx dynamics",
+  "author": "namfx",
+  "license": "GPL-3.0-only",
+  "types": [
+    {
+      "type": "comp", "engine": "comp", "name": "Compressor", "short": "COMP", "cat": "dyn",
+      "desc": "Evens out dynamics", "cpu": 3,
+      "set": {"knee": 6},
+      "params": [
+        {"id": "thresh", "name": "Threshold", "min": -60, "max": 0, "def": -20, "unit": "dB", "map": {"to": "thresh"}},
+        {"id": "ratio", "name": "Ratio", "min": 1, "max": 20, "def": 4, "unit": ":1", "log": true, "map": {"to": "ratio"}},
+        {"id": "attack", "name": "Attack", "min": 0.1, "max": 100, "def": 10, "unit": "ms", "log": true, "map": {"to": "attack"}},
+        {"id": "release", "name": "Release", "min": 10, "max": 1000, "def": 120, "unit": "ms", "log": true, "map": {"to": "release"}},
+        {"id": "makeup", "name": "Makeup", "min": 0, "max": 24, "def": 4, "unit": "dB", "map": {"to": "makeup"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 100, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "comp_opto", "engine": "comp", "name": "Opto Compressor", "short": "OPTO", "cat": "dyn",
+      "desc": "Smooth leveling amp style, slow program-dependent release", "cpu": 2.5,
+      "set": {"attack": 10, "release": 250, "opto": 1, "detect": 1, "knee": 12},
+      "params": [
+        {"id": "reduction", "name": "Peak reduction", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "thresh", "range": [0, -40]}},
+        {"id": "gain", "name": "Gain", "min": 0, "max": 30, "def": 6, "unit": "dB", "map": {"to": "makeup"}},
+        {"id": "mode", "name": "Mode", "kind": "enum", "options": ["Compress", "Limit"], "def": 0, "map": {"to": "ratio", "values": [4, 20]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 100, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "comp_studio", "engine": "comp", "name": "Studio Compressor", "short": "VCA", "cat": "dyn",
+      "desc": "Full-control VCA compressor with side-chain high-pass", "cpu": 3.5,
+      "params": [
+        {"id": "thresh", "name": "Threshold", "min": -60, "max": 0, "def": -24, "unit": "dB", "map": {"to": "thresh"}},
+        {"id": "ratio", "name": "Ratio", "min": 1, "max": 20, "def": 4, "unit": ":1", "log": true, "map": {"to": "ratio"}},
+        {"id": "attack", "name": "Attack", "min": 0.1, "max": 100, "def": 5, "unit": "ms", "log": true, "map": {"to": "attack"}},
+        {"id": "release", "name": "Release", "min": 10, "max": 1000, "def": 150, "unit": "ms", "log": true, "map": {"to": "release"}},
+        {"id": "knee", "name": "Knee", "min": 0, "max": 24, "def": 6, "unit": "dB", "map": {"to": "knee"}},
+        {"id": "makeup", "name": "Makeup", "min": -12, "max": 24, "def": 8, "unit": "dB", "map": {"to": "makeup"}},
+        {"id": "sc_hp", "name": "SC high-pass", "min": 20, "max": 300, "def": 20, "unit": "Hz", "log": true, "map": {"to": "sc_hp"}},
+        {"id": "detect", "name": "Detector", "kind": "enum", "options": ["Peak", "RMS"], "def": 0, "map": {"to": "detect", "values": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 100, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "comp_squash", "engine": "comp", "name": "Squash", "short": "SQSH", "cat": "dyn",
+      "desc": "Pedal-style sustainer, clicky attack, lots of squash", "cpu": 2.5,
+      "set": {"ratio": 10, "attack": 1, "release": 250, "knee": 2},
+      "params": [
+        {"id": "sensitivity", "name": "Sensitivity", "min": 0, "max": 10, "def": 5, "map": {"to": "thresh", "range": [-10, -48]}},
+        {"id": "output", "name": "Output", "min": -12, "max": 24, "def": 12, "unit": "dB", "map": {"to": "makeup"}},
+        {"id": "blend", "name": "Blend", "min": 0, "max": 100, "def": 100, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "limiter", "engine": "comp", "name": "Limiter", "short": "LIM", "cat": "dyn",
+      "desc": "Fast peak limiter", "cpu": 1,
+      "set": {"ratio": 30, "attack": 0.5, "knee": 1},
+      "params": [
+        {"id": "ceiling", "name": "Threshold", "min": -30, "max": 0, "def": -6, "unit": "dB", "map": {"to": "thresh"}},
+        {"id": "release", "name": "Release", "min": 10, "max": 1000, "def": 80, "unit": "ms", "log": true, "map": {"to": "release"}},
+        {"id": "output", "name": "Output", "min": -12, "max": 24, "def": 0, "unit": "dB", "map": {"to": "makeup"}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Pedalboard",
+  "input_gain": 0,
+  "output_gain": -3,
+  "chain": [
+    {"id": "b1", "type": "gate", "on": true, "params": {"thresh": -62}},
+    {"id": "b2", "type": "comp_squash", "on": true, "params": {"sensitivity": 4, "output": 10, "blend": 70}},
+    {"id": "b3", "type": "drive_green", "on": true, "params": {"drive": 4, "tone": 6, "level": -4}},
+    {"id": "b4", "type": "nam", "on": true, "file": "_test_NAM_example_A2.nam", "params": {"size": 0}},
+    {"id": "b5", "type": "ir", "on": true, "file": "synth_4x12_test.wav", "params": {"length": 100}},
+    {"id": "b6", "type": "chorus_analog", "on": false, "params": {"rate": 0.6, "depth": 45, "mix": 45}},
+    {"id": "b7", "type": "delay_tape", "on": true, "params": {"time": 420, "feedback": 35, "mix": 25, "age": 5, "saturation": 4}},
+    {"id": "b8", "type": "reverb_plate", "on": true, "params": {"decay": 50, "brightness": 60, "mix": 18}}
+  ],
+  "scenes": [
+    {"name": "Rhythm", "on": {"b2": true, "b3": false, "b6": false, "b7": false, "b8": true}},
+    {"name": "Lead", "on": {"b2": true, "b3": true, "b6": false, "b7": true, "b8": true}},
+    {"name": "Clean", "on": {"b2": true, "b3": false, "b6": true, "b7": true, "b8": true}}
+  ],
+  "scene": 1
+}

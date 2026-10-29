@@ -1,0 +1,93 @@
+{
+  "pack": "namfx drive",
+  "author": "namfx",
+  "license": "GPL-3.0-only",
+  "types": [
+    {
+      "type": "drive", "engine": "drive", "name": "Overdrive", "short": "OD", "cat": "drive",
+      "desc": "TS / boost / fuzz", "cpu": 1,
+      "params": [
+        {"id": "mode", "name": "Type", "kind": "enum", "options": ["TS", "Boost", "Fuzz"], "def": 0, "map": [
+          {"to": "clip", "values": [2, 0, 3]},
+          {"to": "pre_hp", "values": [720, 20, 100]},
+          {"to": "clean", "values": [1.0, 0, 0]},
+          {"to": "gain", "op": "add", "values": [0, -8, 10]},
+          {"to": "level", "op": "add", "values": [-6, -3, -6]}
+        ]},
+        {"id": "drive", "name": "Drive", "min": 0, "max": 10, "def": 4, "map": {"to": "gain", "range": [6, 40]}},
+        {"id": "tone", "name": "Tone", "min": 0, "max": 10, "def": 5, "map": {"to": "tone", "range": [800, 10000], "curve": "log"}},
+        {"id": "level", "name": "Level", "min": -24, "max": 12, "def": 0, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_green", "engine": "drive", "name": "Green Screamer", "short": "GRN", "cat": "drive",
+      "desc": "Mid-hump overdrive in the style of the classic green pedal", "cpu": 1,
+      "set": {"clip": 2, "pre_hp": 720, "pre_lp": 7000, "clean": 0.5, "mid_freq": 900, "mid_gain": 2},
+      "params": [
+        {"id": "drive", "name": "Drive", "min": 0, "max": 10, "def": 5, "map": {"to": "gain", "range": [12, 42]}},
+        {"id": "tone", "name": "Tone", "min": 0, "max": 10, "def": 5, "map": {"to": "tone", "range": [1200, 6500], "curve": "log"}},
+        {"id": "level", "name": "Level", "min": -24, "max": 12, "def": -4, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_transparent", "engine": "drive", "name": "Transparent OD", "short": "TRNS", "cat": "drive",
+      "desc": "Clean blend that falls as the gain rises - keeps lows and clarity", "cpu": 1,
+      "set": {"clip": 1, "pre_hp": 350, "mid_freq": 1000, "mid_gain": 3, "mid_q": 0.6},
+      "params": [
+        {"id": "gain", "name": "Gain", "min": 0, "max": 10, "def": 4, "map": [{"to": "gain", "range": [6, 36]}, {"to": "clean", "range": [0.9, 0.25]}]},
+        {"id": "treble", "name": "Treble", "min": 0, "max": 10, "def": 5, "map": {"to": "tone", "range": [2500, 12000], "curve": "log"}},
+        {"id": "output", "name": "Output", "min": -24, "max": 12, "def": -3, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_dist", "engine": "drive", "name": "Distortion", "short": "DIST", "cat": "drive",
+      "desc": "Hard-clipping op-amp distortion with a sweepable filter", "cpu": 1,
+      "set": {"clip": 1, "pre_hp": 100},
+      "params": [
+        {"id": "distortion", "name": "Distortion", "min": 0, "max": 10, "def": 6, "map": {"to": "gain", "range": [15, 55]}},
+        {"id": "filter", "name": "Filter", "min": 0, "max": 10, "def": 4, "map": {"to": "tone", "range": [12000, 700], "curve": "log"}},
+        {"id": "volume", "name": "Volume", "min": -24, "max": 12, "def": -6, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_fuzz_vintage", "engine": "drive", "name": "Vintage Fuzz", "short": "FUZZ", "cat": "drive",
+      "desc": "Two-transistor style fuzz; the bias knob makes it sputter", "cpu": 1,
+      "set": {"clip": 3, "pre_hp": 60, "tone": 7000},
+      "params": [
+        {"id": "fuzz", "name": "Fuzz", "min": 0, "max": 10, "def": 7, "map": {"to": "gain", "range": [20, 50]}},
+        {"id": "bias", "name": "Bias", "min": -0.4, "max": 0.4, "def": 0, "map": {"to": "bias"}},
+        {"id": "volume", "name": "Volume", "min": -24, "max": 12, "def": -8, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_fuzz_big", "engine": "drive", "name": "Big Fuzz", "short": "BIGF", "cat": "drive",
+      "desc": "Thick sustaining fuzz with a scooped tone control", "cpu": 1.5,
+      "set": {"clip": 0, "pre_hp": 80, "mid_freq": 1000, "mid_q": 0.5},
+      "params": [
+        {"id": "sustain", "name": "Sustain", "min": 0, "max": 10, "def": 7, "map": {"to": "gain", "range": [25, 55]}},
+        {"id": "tone", "name": "Tone", "min": 0, "max": 10, "def": 5, "map": [{"to": "tone", "range": [1500, 9000], "curve": "log"}, {"to": "mid_gain", "range": [-4, -10]}]},
+        {"id": "volume", "name": "Volume", "min": -24, "max": 12, "def": -8, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_boost", "engine": "drive", "name": "Clean Boost", "short": "BST", "cat": "drive",
+      "desc": "Up to 20 dB of boost, soft limiting only at the extremes", "cpu": 0.5,
+      "set": {"clip": 0},
+      "params": [
+        {"id": "boost", "name": "Boost", "min": 0, "max": 20, "def": 8, "unit": "dB", "map": {"to": "gain"}},
+        {"id": "bright", "name": "Bright", "kind": "bool", "def": 0, "map": [{"to": "mid_freq", "values": [3000, 3000]}, {"to": "mid_gain", "values": [0, 4]}]},
+        {"id": "level", "name": "Level", "min": -24, "max": 12, "def": 0, "unit": "dB", "map": {"to": "level"}}
+      ]
+    },
+    {
+      "type": "drive_treble", "engine": "drive", "name": "Treble Booster", "short": "TRBL", "cat": "drive",
+      "desc": "Germanium-style treble booster - cuts lows, pushes the amp", "cpu": 1,
+      "set": {"clip": 4, "pre_hp": 1000, "tone": 12000},
+      "params": [
+        {"id": "boost", "name": "Boost", "min": 0, "max": 10, "def": 6, "map": {"to": "gain", "range": [10, 30]}},
+        {"id": "range", "name": "Range", "min": 0, "max": 10, "def": 7, "map": {"to": "pre_hp", "range": [300, 2000], "curve": "log"}},
+        {"id": "level", "name": "Level", "min": -24, "max": 12, "def": 0, "unit": "dB", "map": {"to": "level"}}
+      ]
+    }
+  ]
+}

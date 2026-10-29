@@ -1,0 +1,143 @@
+{
+  "pack": "namfx delay",
+  "author": "namfx",
+  "license": "GPL-3.0-only",
+  "types": [
+    {
+      "type": "delay", "engine": "delay", "name": "Delay", "short": "DLY", "cat": "dly",
+      "desc": "Digital / tape, ping-pong", "cpu": 2.5,
+      "set": {"wow_rate": 0.7, "smooth": 120},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2000, "def": 380, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 95, "def": 35, "unit": "%", "map": {"to": "feedback", "range": [0, 0.95]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 30, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "tone", "name": "Tone", "min": 1000, "max": 12000, "def": 5000, "unit": "Hz", "log": true, "map": {"to": "lp"}},
+        {"id": "mode", "name": "Type", "kind": "enum", "options": ["Digital", "Tape"], "def": 0, "map": [{"to": "wow_depth", "values": [0, 0.4]}, {"to": "sat", "values": [0, 0.3]}]},
+        {"id": "pingpong", "name": "Ping-pong", "kind": "bool", "def": 0, "map": {"to": "pingpong", "values": [0, 1]}}
+      ]
+    },
+    {
+      "type": "delay_digital", "engine": "delay", "name": "Digital Delay", "short": "DIGI", "cat": "dly",
+      "desc": "Clean, precise repeats", "cpu": 2,
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2500, "def": 420, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "feedback", "range": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 30, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "highcut", "name": "High cut", "min": 2000, "max": 20000, "def": 20000, "unit": "Hz", "log": true, "map": {"to": "lp"}},
+        {"id": "lowcut", "name": "Low cut", "min": 20, "max": 1000, "def": 20, "unit": "Hz", "log": true, "map": {"to": "hp"}}
+      ]
+    },
+    {
+      "type": "delay_analog", "engine": "delay", "name": "Analog Delay", "short": "ANLG", "cat": "dly",
+      "desc": "Bucket-brigade delay: warm, dark repeats that break up and self-oscillate", "cpu": 4,
+      "set": {"sat": 0.45, "mod_depth": 0.15, "mod_rate": 0.6, "hp": 60, "smooth": 250},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 600, "def": 300, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 110, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 1.1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "dark", "name": "Dark", "min": 0, "max": 10, "def": 5, "map": {"to": "lp", "range": [6000, 1800], "curve": "log"}},
+        {"id": "mod", "name": "Mod", "min": 0, "max": 100, "def": 20, "unit": "%", "map": {"to": "mod_depth", "range": [0, 1.2]}}
+      ]
+    },
+    {
+      "type": "delay_tape", "engine": "delay", "name": "Tape Echo", "short": "TAPE", "cat": "dly",
+      "desc": "Tape echo with wow, flutter, saturation and worn-tape tone", "cpu": 5,
+      "set": {"hp": 80, "smooth": 400, "wow_rate": 0.5, "flutter_rate": 7, "noise": 0.2},
+      "params": [
+        {"id": "time", "name": "Time", "min": 50, "max": 1000, "def": 350, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 110, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 1.1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "age", "name": "Age", "min": 0, "max": 10, "def": 4, "map": [
+          {"to": "lp", "range": [9000, 2500], "curve": "log"},
+          {"to": "flutter_depth", "range": [0.05, 0.35]},
+          {"to": "wow_depth", "range": [0.1, 1.2]}
+        ]},
+        {"id": "saturation", "name": "Saturation", "min": 0, "max": 10, "def": 4, "map": {"to": "sat", "range": [0.1, 0.9]}}
+      ]
+    },
+    {
+      "type": "delay_space", "engine": "delay", "name": "Space Echo", "short": "SPCE", "cat": "dly",
+      "desc": "Multi-head tape echo: three heads, seven head combinations", "cpu": 5.5,
+      "set": {"heads": 3, "r2": 0.667, "r3": 0.333, "wow_depth": 0.3, "wow_rate": 0.45, "flutter_depth": 0.15, "flutter_rate": 8, "sat": 0.3, "hp": 100, "smooth": 400},
+      "params": [
+        {"id": "time", "name": "Repeat rate", "min": 100, "max": 900, "def": 450, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "heads", "name": "Heads", "kind": "enum", "options": ["Short", "Mid", "Long", "Short+Mid", "Mid+Long", "Short+Long", "All"], "def": 3, "map": [
+          {"to": "l3", "values": [1, 0, 0, 0.8, 0, 0.8, 0.7]},
+          {"to": "l2", "values": [0, 1, 0, 0.8, 0.8, 0, 0.7]},
+          {"to": "l1", "values": [0, 0, 1, 0, 0.8, 0.8, 0.7]}
+        ]},
+        {"id": "intensity", "name": "Intensity", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 1.05]}},
+        {"id": "mix", "name": "Echo volume", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "tone", "name": "Tone", "min": 0, "max": 10, "def": 5, "map": {"to": "lp", "range": [2500, 9000], "curve": "log"}}
+      ]
+    },
+    {
+      "type": "delay_ducking", "engine": "delay", "name": "Ducking Delay", "short": "DUCK", "cat": "dly",
+      "desc": "Repeats drop while you play and swell up in the gaps", "cpu": 3,
+      "set": {"lp": 8000},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2000, "def": 450, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 45, "unit": "%", "map": {"to": "mix", "range": [0, 1.2]}},
+        {"id": "duck", "name": "Ducking", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "duck", "range": [0, 1]}},
+        {"id": "release", "name": "Release", "min": 50, "max": 1500, "def": 300, "unit": "ms", "log": true, "map": {"to": "duck_release"}}
+      ]
+    },
+    {
+      "type": "delay_lofi", "engine": "delay", "name": "Lo-Fi Delay", "short": "LOFI", "cat": "dly",
+      "desc": "Bit-crushed, band-limited, noisy repeats", "cpu": 3.5,
+      "set": {"lp": 5000, "hp": 300, "sat": 0.3, "noise": 0.5},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2000, "def": 400, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 45, "unit": "%", "map": {"to": "feedback", "range": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "bits", "name": "Bits", "min": 4, "max": 12, "def": 8, "step": 1, "map": {"to": "bits"}},
+        {"id": "crush", "name": "Crush", "min": 0, "max": 10, "def": 4, "map": {"to": "srate", "range": [20000, 3000], "curve": "log"}}
+      ]
+    },
+    {
+      "type": "delay_mod", "engine": "delay", "name": "Mod Delay", "short": "MODD", "cat": "dly",
+      "desc": "Chorused repeats with a stereo offset", "cpu": 3,
+      "set": {"lp": 7000, "spread": 8},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2000, "def": 400, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "depth", "name": "Mod depth", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "mod_depth", "range": [0, 4]}},
+        {"id": "rate", "name": "Mod rate", "min": 0.1, "max": 5, "def": 0.8, "unit": "Hz", "log": true, "map": {"to": "mod_rate"}}
+      ]
+    },
+    {
+      "type": "delay_slap", "engine": "delay", "name": "Slapback", "short": "SLAP", "cat": "dly",
+      "desc": "Single short echo, rockabilly and country", "cpu": 3,
+      "set": {"feedback": 0.1, "sat": 0.2},
+      "params": [
+        {"id": "time", "name": "Time", "min": 40, "max": 200, "def": 110, "unit": "ms", "map": {"to": "time"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "tone", "name": "Tone", "min": 1500, "max": 12000, "def": 6000, "unit": "Hz", "log": true, "map": {"to": "lp"}}
+      ]
+    },
+    {
+      "type": "delay_pingpong", "engine": "delay", "name": "Ping-Pong", "short": "PING", "cat": "dly",
+      "desc": "Repeats bounce between left and right", "cpu": 2.5,
+      "set": {"pingpong": 1, "lp": 9000},
+      "params": [
+        {"id": "time", "name": "Time", "min": 20, "max": 2000, "def": 375, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 45, "unit": "%", "map": {"to": "feedback", "range": [0, 1]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "width", "name": "Width", "min": 0, "max": 100, "def": 100, "unit": "%", "map": {"to": "width", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "delay_ambient", "engine": "delay", "name": "Ambient Delay", "short": "AMBD", "cat": "dly",
+      "desc": "Diffused, modulated repeats that smear into a pad", "cpu": 4,
+      "set": {"mod_depth": 0.4, "mod_rate": 0.3, "lp": 6500, "hp": 150, "spread": 15, "smooth": 600},
+      "params": [
+        {"id": "time", "name": "Time", "min": 200, "max": 1500, "def": 600, "unit": "ms", "log": true, "map": {"to": "time"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "feedback", "range": [0, 0.95]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "mix", "range": [0, 1]}},
+        {"id": "diffusion", "name": "Diffusion", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "diffuse", "range": [0, 0.75]}}
+      ]
+    }
+  ]
+}

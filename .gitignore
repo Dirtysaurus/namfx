@@ -1,0 +1,6 @@
+build/
+third_party/
+namfx.log
+data/last_preset.txt
+data/cpu_stats.json
+data/settings.json

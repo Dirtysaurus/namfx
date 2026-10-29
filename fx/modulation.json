@@ -1,0 +1,125 @@
+{
+  "pack": "namfx modulation",
+  "author": "namfx",
+  "license": "GPL-3.0-only",
+  "types": [
+    {
+      "type": "chorus", "engine": "mod", "name": "Chorus", "short": "CHO", "cat": "mod",
+      "desc": "Two voices, stereo", "cpu": 3,
+      "set": {"voices": 1, "base": 8, "spread": 0.25, "shape": 0},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 5, "def": 0.8, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "depth", "range": [0, 4]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "mix", "range": [0, 1]}, {"to": "dry", "range": [1, 0.5]}]}
+      ]
+    },
+    {
+      "type": "chorus_analog", "engine": "mod", "name": "Analog Chorus", "short": "ACHO", "cat": "mod",
+      "desc": "Bucket-brigade chorus: darker, slightly gritty, drifting", "cpu": 5,
+      "set": {"voices": 1, "base": 7, "spread": 0.5, "lp": 6000, "sat": 0.25, "drift": 0.2},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 5, "def": 0.6, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "depth", "range": [0, 5]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "chorus_ensemble", "engine": "mod", "name": "Ensemble", "short": "ENS", "cat": "mod",
+      "desc": "Three-voice string-machine style chorus", "cpu": 8.5,
+      "set": {"voices": 3, "base": 12, "spread": 0.33, "drift": 0.4, "lp": 9000},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.1, "max": 3, "def": 0.7, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "depth", "range": [0, 6]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "chorus_dimension", "engine": "mod", "name": "Dimension", "short": "DIM", "cat": "mod",
+      "desc": "Subtle wide stereo chorus with four fixed modes", "cpu": 2.5,
+      "set": {"voices": 1, "base": 6, "shape": 1, "spread": 0.5},
+      "params": [
+        {"id": "mode", "name": "Mode", "kind": "enum", "options": ["1", "2", "3", "4"], "def": 1, "map": [
+          {"to": "depth", "values": [0.6, 1.0, 1.5, 2.0]},
+          {"to": "rate", "values": [0.25, 0.35, 0.5, 0.6]}
+        ]},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "vibrato", "engine": "mod", "name": "Vibrato", "short": "VIB", "cat": "mod",
+      "desc": "Pitch vibrato (wet only)", "cpu": 3,
+      "set": {"voices": 1, "base": 5, "dry": 0, "mix": 1, "spread": 0},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.5, "max": 10, "def": 5, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 40, "unit": "%", "map": {"to": "depth", "range": [0, 4]}},
+        {"id": "shape", "name": "Shape", "kind": "enum", "options": ["Sine", "Triangle"], "def": 0, "map": {"to": "shape", "values": [0, 1]}}
+      ]
+    },
+    {
+      "type": "flanger", "engine": "mod", "name": "Flanger", "short": "FLG", "cat": "mod",
+      "desc": "Feedback, jet sweep", "cpu": 2.5,
+      "set": {"voices": 1, "base": 0.5, "shape": 1, "spread": 0.25},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 5, "def": 0.3, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "depth", "range": [0, 4]}},
+        {"id": "feedback", "name": "Feedback", "min": -90, "max": 90, "def": 50, "unit": "%", "map": {"to": "feedback", "range": [-0.9, 0.9]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "mix", "range": [0, 1]}, {"to": "dry", "range": [1, 0.5]}]}
+      ]
+    },
+    {
+      "type": "flanger_jet", "engine": "mod", "name": "Jet Flanger", "short": "JET", "cat": "mod",
+      "desc": "Deep flanger with a manual delay control", "cpu": 3,
+      "set": {"voices": 1, "shape": 1, "spread": 0.25, "lp": 12000},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 2, "def": 0.2, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "depth", "range": [0, 6]}},
+        {"id": "manual", "name": "Manual", "min": 0.1, "max": 5, "def": 0.8, "unit": "ms", "log": true, "map": {"to": "base"}},
+        {"id": "feedback", "name": "Regen", "min": -95, "max": 95, "def": 50, "unit": "%", "map": {"to": "feedback", "range": [-0.95, 0.95]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "mix", "range": [0, 0.8]}, {"to": "dry", "range": [1, 0.5]}]}
+      ]
+    },
+    {
+      "type": "phaser", "engine": "phaser", "name": "Phaser", "short": "PHA", "cat": "mod",
+      "desc": "4/8 stages", "cpu": 2,
+      "set": {"fmin": 200},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 5, "def": 0.5, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "fmax", "range": [201, 2000], "curve": "log"}},
+        {"id": "feedback", "name": "Feedback", "min": 0, "max": 90, "def": 40, "unit": "%", "map": {"to": "feedback", "range": [0, 0.9]}},
+        {"id": "stages", "name": "Stages", "kind": "enum", "options": ["4", "8"], "def": 0, "map": {"to": "stages", "values": [4, 8]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "mix", "range": [0, 1]}, {"to": "dry", "range": [1, 0.5]}]}
+      ]
+    },
+    {
+      "type": "phaser_script", "engine": "phaser", "name": "Vintage Phase", "short": "VPH", "cat": "mod",
+      "desc": "One-knob 4-stage phaser; Feedback adds the resonant version", "cpu": 2,
+      "set": {"stages": 4, "fmin": 150, "fmax": 1600, "mix": 0.5, "dry": 0.5},
+      "params": [
+        {"id": "speed", "name": "Speed", "min": 0.1, "max": 8, "def": 0.6, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "feedback", "name": "Feedback", "kind": "bool", "def": 0, "map": {"to": "feedback", "values": [0, 0.5]}}
+      ]
+    },
+    {
+      "type": "phaser_deep", "engine": "phaser", "name": "Deep Phaser", "short": "DPH", "cat": "mod",
+      "desc": "8-12 stage phaser with a wide sweep, stereo", "cpu": 3.5,
+      "set": {"fmin": 100, "spread": 0.25},
+      "params": [
+        {"id": "rate", "name": "Rate", "min": 0.05, "max": 5, "def": 0.3, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "depth", "name": "Depth", "min": 0, "max": 100, "def": 80, "unit": "%", "map": {"to": "fmax", "range": [400, 6000], "curve": "log"}},
+        {"id": "feedback", "name": "Feedback", "min": -90, "max": 90, "def": 50, "unit": "%", "map": {"to": "feedback", "range": [-0.9, 0.9]}},
+        {"id": "stages", "name": "Stages", "kind": "enum", "options": ["8", "10", "12"], "def": 0, "map": {"to": "stages", "values": [8, 10, 12]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "mix", "range": [0, 1]}, {"to": "dry", "range": [1, 0.5]}]}
+      ]
+    },
+    {
+      "type": "univibe", "engine": "phaser", "name": "Uni-Vibe", "short": "VIBE", "cat": "mod",
+      "desc": "Lamp-and-photocell vibe: throbbing chorus or vibrato", "cpu": 2,
+      "set": {"stages": 4, "shape": 2, "stagger": 1, "fmin": 180, "feedback": 0.15},
+      "params": [
+        {"id": "speed", "name": "Speed", "min": 0.5, "max": 10, "def": 2, "unit": "Hz", "log": true, "map": {"to": "rate"}},
+        {"id": "intensity", "name": "Intensity", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "fmax", "range": [400, 3500], "curve": "log"}},
+        {"id": "mode", "name": "Mode", "kind": "enum", "options": ["Chorus", "Vibrato"], "def": 0, "map": [{"to": "dry", "values": [1, 0]}, {"to": "mix", "values": [0.7, 1]}]}
+      ]
+    }
+  ]
+}

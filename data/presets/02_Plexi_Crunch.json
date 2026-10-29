@@ -1,0 +1,100 @@
+{
+  "name": "Plexi Crunch",
+  "input_gain": 0,
+  "output_gain": -3,
+  "chain": [
+    {
+      "id": "b1",
+      "type": "gate",
+      "on": true,
+      "params": {
+        "thresh": -58
+      }
+    },
+    {
+      "id": "b2",
+      "type": "comp",
+      "on": false,
+      "params": {}
+    },
+    {
+      "id": "b3",
+      "type": "drive",
+      "on": false,
+      "params": {
+        "mode": 0,
+        "drive": 3,
+        "tone": 6,
+        "level": 2
+      }
+    },
+    {
+      "id": "b4",
+      "type": "nam",
+      "on": true,
+      "params": {
+        "input": 3
+      },
+      "file": "_test_NAM_example_A2.nam"
+    },
+    {
+      "id": "b5",
+      "type": "ir",
+      "on": true,
+      "params": {},
+      "file": "synth_4x12_test.wav"
+    },
+    {
+      "id": "b6",
+      "type": "eq",
+      "on": true,
+      "params": {
+        "lowcut": 80,
+        "hmgain": 1.5
+      }
+    },
+    {
+      "id": "b7",
+      "type": "delay",
+      "on": true,
+      "params": {
+        "time": 380,
+        "feedback": 35,
+        "mix": 25
+      }
+    },
+    {
+      "id": "b8",
+      "type": "reverb",
+      "on": true,
+      "params": {
+        "type": 0,
+        "mix": 15
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Rhythm",
+      "on": {
+        "b3": false,
+        "b7": false
+      }
+    },
+    {
+      "name": "Crunch",
+      "on": {
+        "b3": false,
+        "b7": true
+      }
+    },
+    {
+      "name": "Lead",
+      "on": {
+        "b3": true,
+        "b7": true
+      }
+    }
+  ],
+  "scene": 1
+}

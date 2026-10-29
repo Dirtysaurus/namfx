@@ -1,0 +1,152 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0C0F">
+<title>namfx – R36S NAM effect</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="presetbar">
+      <button class="ibtn" id="prevPreset" aria-label="Previous preset" data-i18n-attr="aria-label:ui.prev_preset">‹</button>
+      <div class="pname">
+        <div class="pnum" id="pnum">PRESET --</div>
+        <button class="ptitle" id="ptitle" title="Rename" data-i18n-attr="title:ui.rename">New preset</button>
+      </div>
+      <button class="ibtn" id="nextPreset" aria-label="Next preset" data-i18n-attr="aria-label:ui.next_preset">›</button>
+      <button class="save" id="savePreset" data-i18n="ui.save">Save</button>
+    </div>
+    <div class="meters">
+      <span id="cpu" class="cpu">CPU –</span>
+      <span class="m">IN <span class="track"><span id="mIn"></span></span></span>
+      <span class="m">OUT <span class="track"><span id="mOut"></span></span></span>
+      <span id="conn" class="conn off">offline</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="tab-rig" class="tab active">
+      <div class="rigbar"><div class="scenes" id="scenes"></div><button class="ibtn view" id="viewBtn" aria-label="Rig view" data-i18n-attr="aria-label:sys.view">▦</button></div>
+      <div class="chain" id="chain"></div>
+    </section>
+
+    <section id="tab-files" class="tab">
+      <div class="files" id="files"></div>
+    </section>
+
+    <section id="tab-tuner" class="tab">
+      <div class="tuner">
+        <div class="strings" id="tStrings"></div>
+        <div class="note"><span id="tNote">·</span><sub id="tOct"></sub></div>
+        <div class="cents" id="tBar"></div>
+        <div class="scale"><span>−50 c</span><span>0</span><span>+50 c</span></div>
+        <div class="freq" id="tFreq" data-i18n="ui.play_string">play a string</div>
+        <div class="row">
+          <label class="chk"><input type="checkbox" id="tMute" checked> <span data-i18n="ui.mute_output">mute output</span></label>
+          <label>A4 <input type="number" id="tA4" min="430" max="450" step="1" value="440"> Hz</label>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-sys" class="tab">
+      <div class="card">
+        <h3 data-i18n="sys.input">Input</h3>
+        <div class="seg" id="srcSeg">
+          <button data-src="live" data-i18n="sys.live">Guitar (live)</button>
+          <button data-src="wav" data-i18n="sys.wav">WAV file</button>
+        </div>
+        <div id="wavBox">
+          <select id="wavSel" aria-label="WAV file"></select>
+          <div class="transport">
+            <button id="wavPlay" class="pill">▶ Play</button>
+            <button id="wavRew" class="pill" data-i18n="ui.rewind">⏮ Rewind</button>
+            <label class="chk"><input type="checkbox" id="wavLoop" checked> <span data-i18n="ui.loop">loop</span></label>
+          </div>
+          <div class="pos"><span id="wavPos"></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.levels">Levels</h3>
+        <label class="prow"><span data-i18n="sys.input_gain">Input gain</span><input type="range" id="gIn" min="-24" max="24" step="0.5"><output id="gInV"></output></label>
+        <label class="prow"><span data-i18n="sys.output">Output</span><input type="range" id="gOut" min="-60" max="12" step="0.5"><output id="gOutV"></output></label>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.preset">Preset</h3>
+        <div class="transport">
+          <button class="pill" id="presetNew" data-i18n="sys.preset_new">New empty</button>
+          <button class="pill" id="presetSaveAs" data-i18n="sys.preset_save_as">Save as…</button>
+          <button class="pill" id="sceneAdd" data-i18n="sys.scene_add">+ Scene from current state</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.language">Language</h3>
+        <select id="langSel" aria-label="Language" data-i18n-attr="aria-label:sys.language"></select>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.network">Network</h3>
+        <div class="kv" id="netInfo"></div>
+        <div class="prow"><span data-i18n="sys.hotspot">Own WiFi (hotspot)</span>
+          <div class="seg" id="netMode" style="grid-column: span 2">
+            <button data-mode="auto" data-i18n="net.auto">Auto</button>
+            <button data-mode="always" data-i18n="net.always">Always</button>
+            <button data-mode="off" data-i18n="net.off">Off</button>
+          </div>
+        </div>
+        <label class="prow"><span data-i18n="sys.ssid">Network name</span><input type="text" id="netSsid" maxlength="32" style="grid-column: span 2"></label>
+        <label class="prow"><span data-i18n="sys.password">Password</span><input type="text" id="netPass" maxlength="63" style="grid-column: span 2"></label>
+        <div class="transport">
+          <button class="pill" id="netSave" data-i18n="sys.net_save">Save name and password</button>
+          <button class="pill" id="netStart" data-i18n="sys.net_start">Start hotspot now</button>
+          <button class="pill danger" id="netStop" data-i18n="sys.net_stop">Stop hotspot</button>
+        </div>
+        <p class="info" data-i18n="sys.net_hint">Auto: when the console finds no known WiFi for 20 s, it opens its own network. Connect your phone to it and open http://10.42.0.1 (the address is also shown at the bottom of the console screen).</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.appearance">Appearance</h3>
+        <label class="prow"><span data-i18n="sys.theme">Theme</span><select id="themeSel" style="grid-column: span 2" aria-label="Theme" data-i18n-attr="aria-label:sys.theme"></select></label>
+        <div class="prow"><span data-i18n="sys.view">Rig view</span>
+          <div class="seg" id="viewSeg" style="grid-column: span 2">
+            <button data-view="tiles" data-i18n="view.tiles">Tiles</button>
+            <button data-view="pedals" data-i18n="view.pedals">Pedalboard</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.effects">Effects</h3>
+        <div class="kv" id="fxInfo"></div>
+        <div class="transport">
+          <button class="pill" id="fxRescan" data-i18n="sys.fx_rescan">Reload effect types</button>
+          <button class="pill" id="fxLogBtn" data-i18n="sys.fx_log">Load log</button>
+        </div>
+        <div class="fxlog" id="fxLog" hidden></div>
+        <p class="info" data-i18n="sys.lv2_hint">LV2 plugins: install them on the console (e.g. sudo apt install guitarix-lv2 x42-plugins) or copy .lv2 bundles (ARM64 builds) into data/lv2, then restart namfx.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="sys.status">Status</h3>
+        <div class="kv" id="sysInfo"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-tab="rig" class="active" data-i18n="tab.rig">Rig</button>
+    <button data-tab="files" data-i18n="tab.files">Files</button>
+    <button data-tab="tuner" data-i18n="tab.tuner">Tuner</button>
+    <button data-tab="sys" data-i18n="tab.system">System</button>
+  </nav>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-body">
+    <div class="sheet-head"><span id="sheetTitle">Add block</span><button class="ibtn" id="sheetClose" aria-label="Close" data-i18n-attr="aria-label:ui.close">✕</button></div>
+    <div id="sheetContent"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

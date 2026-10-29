@@ -1,0 +1,110 @@
+{
+  "name": "Dual Amp",
+  "input_gain": 0,
+  "output_gain": -4,
+  "chain": [
+    {
+      "id": "b1",
+      "type": "gate",
+      "on": true,
+      "params": {
+        "thresh": -60
+      }
+    },
+    {
+      "id": "b2",
+      "type": "comp",
+      "on": true,
+      "params": {
+        "ratio": 4
+      }
+    },
+    {
+      "id": "b3",
+      "type": "split",
+      "on": true,
+      "params": {
+        "mode": 2,
+        "freq": 650,
+        "levelA": 0,
+        "levelB": -6,
+        "panA": -60,
+        "panB": 60,
+        "stereo": 1
+      },
+      "a": [
+        {
+          "id": "b10",
+          "type": "drive",
+          "on": true,
+          "params": {
+            "drive": 4
+          }
+        },
+        {
+          "id": "b11",
+          "type": "nam",
+          "on": true,
+          "params": {
+            "input": 4
+          },
+          "file": "_test_NAM_example_A2.nam"
+        },
+        {
+          "id": "b12",
+          "type": "ir",
+          "on": true,
+          "params": {},
+          "file": "synth_4x12_test.wav"
+        }
+      ],
+      "b": [
+        {
+          "id": "b20",
+          "type": "nam",
+          "on": true,
+          "params": {
+            "input": -6,
+            "size": 0
+          },
+          "file": "_test_NAM_example_A2.nam"
+        },
+        {
+          "id": "b21",
+          "type": "ir",
+          "on": true,
+          "params": {
+            "highcut": 7000
+          },
+          "file": "synth_4x12_test.wav"
+        }
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "eq",
+      "on": true,
+      "params": {}
+    },
+    {
+      "id": "b5",
+      "type": "delay",
+      "on": true,
+      "params": {
+        "time": 380,
+        "mix": 20,
+        "pingpong": 1
+      }
+    },
+    {
+      "id": "b6",
+      "type": "reverb",
+      "on": false,
+      "params": {
+        "type": 2
+      }
+    }
+  ],
+  "scenes": [],
+  "scene": -1
+}

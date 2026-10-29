@@ -1,0 +1,74 @@
+{
+  "pack": "namfx reverb",
+  "author": "namfx",
+  "license": "GPL-3.0-only",
+  "types": [
+    {
+      "type": "reverb", "engine": "reverb", "name": "Reverb", "short": "REV", "cat": "rev",
+      "desc": "Room / hall / plate", "cpu": 3,
+      "params": [
+        {"id": "type", "name": "Type", "kind": "enum", "options": ["Room", "Hall", "Plate"], "def": 1, "map": [
+          {"to": "room", "op": "add", "values": [0.6, 0.7, 0.75]},
+          {"to": "damp", "op": "mul", "values": [0.5, 0.4, 0.2]},
+          {"to": "damp", "op": "add", "values": [0.2, 0, 0]}
+        ]},
+        {"id": "size", "name": "Size", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "room", "range": [0, 0.25]}},
+        {"id": "damping", "name": "Damping", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "damp", "range": [0, 1]}},
+        {"id": "predelay", "name": "Predelay", "min": 0, "max": 200, "def": 20, "unit": "ms", "map": {"to": "predelay"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 20, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "reverb_room", "engine": "reverb", "name": "Room", "short": "ROOM", "cat": "rev",
+      "desc": "Small to medium room", "cpu": 3,
+      "set": {"width": 0.8, "lowcut": 80, "diffusion": 0.5},
+      "params": [
+        {"id": "size", "name": "Size", "min": 0, "max": 100, "def": 50, "unit": "%", "map": [{"to": "size", "range": [0.45, 0.9]}, {"to": "room", "range": [0.55, 0.8]}]},
+        {"id": "damping", "name": "Damping", "min": 0, "max": 100, "def": 50, "unit": "%", "map": {"to": "damp", "range": [0.2, 0.85]}},
+        {"id": "predelay", "name": "Predelay", "min": 0, "max": 100, "def": 5, "unit": "ms", "map": {"to": "predelay"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 20, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "reverb_hall", "engine": "reverb", "name": "Hall", "short": "HALL", "cat": "rev",
+      "desc": "Large concert hall with long decay", "cpu": 3,
+      "set": {"size": 1.4, "damp": 0.35, "lowcut": 100, "diffusion": 0.6},
+      "params": [
+        {"id": "decay", "name": "Decay", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "room", "range": [0.8, 0.97]}},
+        {"id": "predelay", "name": "Predelay", "min": 0, "max": 200, "def": 30, "unit": "ms", "map": {"to": "predelay"}},
+        {"id": "tone", "name": "Tone", "min": 3000, "max": 14000, "def": 8000, "unit": "Hz", "log": true, "map": {"to": "highcut"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 25, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "reverb_plate", "engine": "reverb", "name": "Plate", "short": "PLT", "cat": "rev",
+      "desc": "Bright, dense studio plate", "cpu": 3,
+      "set": {"size": 0.8, "diffusion": 0.72, "lowcut": 150},
+      "params": [
+        {"id": "decay", "name": "Decay", "min": 0, "max": 100, "def": 55, "unit": "%", "map": {"to": "room", "range": [0.75, 0.95]}},
+        {"id": "brightness", "name": "Brightness", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "damp", "range": [0.5, 0.05]}},
+        {"id": "predelay", "name": "Predelay", "min": 0, "max": 100, "def": 10, "unit": "ms", "map": {"to": "predelay"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 25, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "reverb_dark", "engine": "reverb", "name": "Dark Reverb", "short": "DARK", "cat": "rev",
+      "desc": "Warm, heavily damped space that stays behind the guitar", "cpu": 3,
+      "set": {"damp": 0.75, "highcut": 3000, "size": 1.2, "lowcut": 120},
+      "params": [
+        {"id": "decay", "name": "Decay", "min": 0, "max": 100, "def": 60, "unit": "%", "map": {"to": "room", "range": [0.75, 0.96]}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 25, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    },
+    {
+      "type": "reverb_ambient", "engine": "reverb", "name": "Ambient", "short": "AMB", "cat": "rev",
+      "desc": "Huge, slowly decaying wash", "cpu": 3,
+      "set": {"size": 1.6, "predelay": 60, "diffusion": 0.72, "lowcut": 200, "damp": 0.3},
+      "params": [
+        {"id": "decay", "name": "Decay", "min": 0, "max": 100, "def": 70, "unit": "%", "map": {"to": "room", "range": [0.9, 0.99]}},
+        {"id": "tone", "name": "Tone", "min": 2000, "max": 14000, "def": 7000, "unit": "Hz", "log": true, "map": {"to": "highcut"}},
+        {"id": "mix", "name": "Mix", "min": 0, "max": 100, "def": 35, "unit": "%", "map": {"to": "mix", "range": [0, 1]}}
+      ]
+    }
+  ]
+}
