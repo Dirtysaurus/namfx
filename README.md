@@ -170,7 +170,7 @@ support AP mode (`iw list` → *Supported interface modes: AP*).
 - **Always:** own network whenever namfx runs (the console leaves its normal WiFi).
 - **Off:** never.
 
-Default network `namfx`, password `namfx1234`. Connect the phone and open `http://10.42.0.1`
+Default network `namfx`; the password is generated randomly on the first start (shown under System → Network and in the console footer, editable). Connect the phone and open `http://10.42.0.1`
 (the address is also in the bottom right of the console screen). Mode, name and password are set
 in the web UI (System → Network, also *Start / Stop hotspot now*) or on the console
 (Start → Own WiFi) and stored in `data/settings.json`. The hotspot stops when namfx quits and
@@ -180,6 +180,11 @@ Ports launcher has; `--no-hotspot` turns the feature off completely.
 **Web password (optional).** The web UI, the WebSocket and uploads are open by default, which is fine
 at home but not on a shared network or the hotspot. Add `"web_password": "your password"` to
 `data/settings.json` and restart namfx: the browser then asks for a login (user `namfx`, that password).
+
+## Web extras
+
+- **Stage tab:** big preset name, previous/next preset, mute, output meter and CPU; keeps the phone screen on.
+- The OUT meter in the header turns red when the output clips (above −1 dBFS).
 
 ## Audio input
 
@@ -262,7 +267,7 @@ Commands are sent as `{"cmd": …}`:
 - **presets and scenes:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **settings and input:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **network:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (status) and `state.hotspot_cfg`
-- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (cards, active input, choice, manual); `metronome {on?, bpm 30-300, volume dB}` (click mixed after the effects, `state.metronome`; web: System → Metronome with tap tempo), `undo` / `redo` (structural edits: add, remove, move, bypass, file change; last 30; `state.can_undo`/`can_redo`), `mute {on?}` panic mute (fades the output, toggles without `on`), `state.muted`; `status` also has `in_l_db` / `in_r_db` (raw capture peaks per channel)
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `output: same|pcm:<ALSA name>` (e.g. `pcm:bluealsa`, `pcm:pulse` for Bluetooth headphones), `audio_scan`; `state.audio_dev` (cards, active input, choice, manual); `metronome {on?, bpm 30-300, volume dB}` (click mixed after the effects, `state.metronome`; web: System → Metronome with tap tempo), `undo` / `redo` (structural edits: add, remove, move, bypass, file change; last 30; `state.can_undo`/`can_redo`), `mute {on?}` panic mute (fades the output, toggles without `on`), `state.muted`; `status` also has `in_l_db` / `in_r_db` (raw capture peaks per channel)
 - **effect catalog:** `fx_rescan`, `catalog_log`, `engines`
 
 The server pushes `state` on every change and `status` 10× per second (CPU, levels, per-block load `loads`, tuner). When the catalog changes, `state.catalog_version` changes.

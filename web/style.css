@@ -218,3 +218,14 @@ select, input[type=number], input[type=text] { height: 36px; border-radius: 6px;
 .plane .lh { font-weight: 800; color: var(--lc); width: 16px; }
 .plane .addslot { width: 44px; height: 92px; --lc: inherit; }
 .addped { width: calc(33.333% - 7px); max-width: 150px; aspect-ratio: .72; height: auto; }
+
+/* stage view: big, readable from a distance */
+.stage { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px 16px; text-align: center; }
+.stname { font-size: clamp(32px, 11vw, 64px); font-weight: 800; line-height: 1.1; word-break: break-word; }
+.stscene { font-size: 20px; color: var(--dim); min-height: 24px; }
+.stbtns { display: flex; gap: 12px; width: 100%; }
+.stbtns .pill { flex: 1; font-size: 28px; padding: 22px 0; }
+.stmeter { width: 100%; }
+.stmeter .track { display: block; height: 18px; }
+.stmeter .track span { height: 18px; }
+.stcpu { color: var(--dim); font-size: 16px; }

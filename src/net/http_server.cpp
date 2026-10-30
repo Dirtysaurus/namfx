@@ -229,6 +229,8 @@ static const char* mimeOf(const std::string& p) {
   return "application/octet-stream";
 }
 
+static const unsigned long long kMaxBody = 128ull * 1024 * 1024;  // largest upload (a NAM model / IR is a few MB)
+
 void HttpServer::setPassword(const std::string& pw) { authToken_ = pw.empty() ? std::string() : base64("namfx:" + pw); }
 
 void HttpServer::serveStatic(const HttpRequest& r, HttpResponse& resp) {
@@ -266,7 +268,19 @@ bool HttpServer::handleHttp(Conn& c) {
     while (!v.empty() && v[0] == ' ') v.erase(0, 1);
     r.headers[k] = v;
   }
-  const size_t len = r.headers.count("content-length") ? std::stoul(r.headers["content-length"]) : 0;
+  size_t len = 0;
+  if (r.headers.count("content-length")) {
+    const std::string& cl = r.headers["content-length"];
+    if (cl.empty() || cl.size() > 12 || cl.find_first_not_of("0123456789") != std::string::npos || std::stoull(cl) > kMaxBody) {
+      const std::string body = "payload too large or invalid";
+      c.out += "HTTP/1.1 413 Payload Too Large\r\nContent-Type: text/plain\r\nContent-Length: " + std::to_string(body.size()) +
+               "\r\nConnection: close\r\n\r\n" + body;
+      c.closeAfter = true;
+      c.in.clear();
+      return false;
+    }
+    len = std::stoull(cl);
+  }
   if (c.in.size() < he + 4 + len) return false;
   r.body = c.in.substr(he + 4, len);
   c.in.erase(0, he + 4 + len);

@@ -170,7 +170,7 @@ z telefonu. Používá NetworkManager (`nmcli device wifi hotspot`); WiFi čip m
 - **Vždy:** vlastní síť po celou dobu běhu namfx (konzole opustí běžnou WiFi).
 - **Vypnuto:** nikdy.
 
-Výchozí síť `namfx`, heslo `namfx1234`. Připoj telefon a otevři `http://10.42.0.1` (adresa je
+Výchozí síť `namfx`; heslo se při prvním spuštění náhodně vygeneruje (vidíte ho v System → Network a v zápatí konzole, jde změnit). Připoj telefon a otevři `http://10.42.0.1` (adresa je
 i vpravo dole na obrazovce konzole). Režim, název a heslo se nastavují ve web UI (Systém → Síť,
 tam i *Spustit / Zastavit hotspot teď*) nebo na konzoli (Start → Vlastní WiFi) a ukládají se do
 `data/settings.json`. Po ukončení namfx se hotspot vypne a NetworkManager se znovu připojí ke
@@ -181,6 +181,11 @@ funkci úplně vypne.
 což je doma v pořádku, ale ne ve sdílené síti nebo na hotspotu. Přidejte do `data/settings.json`
 `"web_password": "vaše heslo"` a namfx restartujte: prohlížeč se pak zeptá na přihlášení (uživatel `namfx`
 a toto heslo).
+
+## Další funkce webu
+
+- **Záložka Pódium:** velký název presetu, předchozí/další preset, ztlumení, měřič výstupu a CPU; drží displej telefonu rozsvícený.
+- Měřič OUT v záhlaví zčervená, když výstup klipuje (nad −1 dBFS).
 
 ## Zvukový vstup
 
@@ -255,7 +260,7 @@ Příkazy `{"cmd": …}`:
 - **presety a scény:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **nastavení a vstup:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **síť:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (stav) a `state.hotspot_cfg`
-- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `metronome {on?, bpm 30-300, volume dB}` (klik přimíchaný za efekty, `state.metronome`; web: System → Metronom s tap tempem), `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `output: same|pcm:<ALSA jméno>` (např. `pcm:bluealsa`, `pcm:pulse` pro Bluetooth sluchátka), `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `metronome {on?, bpm 30-300, volume dB}` (klik přimíchaný za efekty, `state.metronome`; web: System → Metronom s tap tempem), `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
 - **katalog efektů:** `fx_rescan`, `catalog_log`, `engines`
 
 Server posílá `state` (při změně) a `status` (10×/s: CPU, úrovně, zátěž bloků `loads`, ladička). Při změně katalogu se změní `state.catalog_version`.

@@ -207,6 +207,12 @@ function setStatus(m) {
   const w = (db) => Math.max(0, Math.min(100, ((db + 60) / 60) * 100)) + '%';
   $('#mIn').style.width = w(m.in_db);
   $('#mOut').style.width = w(m.out_db);
+  $('#mOut').style.background = m.out_db > -1 ? 'var(--err)' : '';  // clipping
+  $('#stOut').style.width = w(m.out_db);
+  $('#stOut').style.background = m.out_db > -1 ? 'var(--err)' : '';
+  $('#stCpu').textContent = `CPU ${Math.round(cpu)} %`;
+  $('#stMute').style.color = m.muted ? 'var(--err)' : '';
+  $('#stMute').textContent = m.muted ? t('ui.unmute', 'Unmute') : t('ui.mute', 'Mute');
   $('#mInL').style.width = w(m.in_l_db);
   $('#mInR').style.width = w(m.in_r_db);
   const mb = $('#muteBtn');
@@ -220,6 +226,8 @@ function setStatus(m) {
 function renderAll() {
   const st = S.state;
   if (!st || !S.catalog.length) return;
+  $('#stName').textContent = st.preset.name;
+  $('#stScene').textContent = st.scene >= 0 ? t('ui.scene', 'Scene') + ' ' + (st.scene + 1) : '';
   $('#undoBtn').disabled = !st.can_undo;
   $('#redoBtn').disabled = !st.can_redo;
   const pl = st.files.presets;
@@ -721,6 +729,7 @@ function renderAudio() {
   if (!opts.some(([v]) => v === cur)) opts.push([cur, cur.replace(/^card:/, '') + ' (' + t('aud.unplugged', 'not connected') + ')']);
   if (document.activeElement !== $('#audDev')) $('#audDev').replaceChildren(...opts.map(([v, n]) => el('option', { value: v, selected: v === cur }, n)));
   [...$('#audCh').children].forEach((b) => b.classList.toggle('on', b.dataset.ch === (ch.channel || 'auto')));
+  $('#audOut').value = ch.output || 'same';
 }
 
 function renderNet() {
@@ -737,7 +746,7 @@ function renderNet() {
   const mode = cfg.mode || 'auto';
   [...$('#netMode').children].forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
   if (document.activeElement !== $('#netSsid')) $('#netSsid').value = cfg.ssid || 'namfx';
-  if (document.activeElement !== $('#netPass')) $('#netPass').value = cfg.password || 'namfx1234';
+  if (document.activeElement !== $('#netPass')) $('#netPass').value = cfg.password || '';
   $('#netStart').hidden = !n.available || !!n.hotspot;
   $('#netStop').hidden = !n.hotspot;
 }
@@ -784,6 +793,7 @@ function initSys() {
   $('#themeSel').onchange = (e) => send({ cmd: 'set_ui', theme: e.target.value });
   $('#audDev').onchange = (e) => send({ cmd: 'audio_set', device: e.target.value });
   [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
+  $('#audOut').onchange = (e) => send({ cmd: 'audio_set', output: e.target.value });
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });
   $('#metBpm').onchange = (e) => send({ cmd: 'metronome', bpm: +e.target.value });
@@ -820,6 +830,14 @@ function initSys() {
 
 // ------------------------------------------------------------ header, tabs
 
+let wakeLock = null;
+async function keepAwake(on) {  // the stage view keeps the phone screen on
+  try {
+    if (on && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    else if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { /* not supported or refused */ }
+}
+
 function initTop() {
   const step = (d) => {
     const pl = S.state.files.presets;
@@ -829,6 +847,9 @@ function initTop() {
     send({ cmd: 'preset_load', file: pl[i] });
   };
   $('#viewBtn').onclick = () => send({ cmd: 'set_ui', view: S.view === 'pedals' ? 'tiles' : 'pedals' });
+  $('#stPrev').onclick = () => step(-1);
+  $('#stNext').onclick = () => step(1);
+  $('#stMute').onclick = () => send({ cmd: 'mute' });
   $('#prevPreset').onclick = () => step(-1);
   $('#nextPreset').onclick = () => step(1);
   $('#ptitle').onclick = () => { const n = prompt(t('ui.preset_name', 'Preset name'), S.state.preset.name); if (n) send({ cmd: 'preset_rename', name: n }); };
@@ -841,6 +862,7 @@ function initTop() {
     S.tab = b.dataset.tab;
     document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x === b));
     document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x.id === 'tab-' + S.tab));
+    keepAwake(S.tab === 'stage');
     if (S.tab === 'tuner') send({ cmd: 'tuner', on: true });
     else if (prev === 'tuner') send({ cmd: 'tuner', on: false });
   }));

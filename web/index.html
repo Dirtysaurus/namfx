@@ -41,6 +41,20 @@
       <div class="files" id="files"></div>
     </section>
 
+    <section id="tab-stage" class="tab">
+      <div class="stage">
+        <div class="stname" id="stName">–</div>
+        <div class="stscene" id="stScene"></div>
+        <div class="stbtns">
+          <button id="stPrev" class="pill" aria-label="Previous preset" data-i18n-attr="aria-label:ui.prev_preset">‹</button>
+          <button id="stMute" class="pill" data-i18n="ui.mute">Mute</button>
+          <button id="stNext" class="pill" aria-label="Next preset" data-i18n-attr="aria-label:ui.next_preset">›</button>
+        </div>
+        <div class="stmeter"><span class="track"><span id="stOut"></span></span></div>
+        <div class="stcpu" id="stCpu"></div>
+      </div>
+    </section>
+
     <section id="tab-tuner" class="tab">
       <div class="tuner">
         <div class="strings" id="tStrings"></div>
@@ -84,6 +98,14 @@
             <button data-ch="sum" data-i18n="aud.sum">Sum</button>
           </div>
         </div>
+        <label class="prow"><span data-i18n="sys.aud_output">Output</span>
+          <select id="audOut" style="grid-column: span 2" aria-label="Output" data-i18n-attr="aria-label:sys.aud_output">
+            <option value="same" data-i18n="sys.aud_out_same">Same card as the input</option>
+            <option value="pcm:bluealsa">Bluetooth (bluealsa)</option>
+            <option value="pcm:pulse">PulseAudio / Bluetooth (pulse)</option>
+            <option value="pcm:pipewire">PipeWire / Bluetooth (pipewire)</option>
+          </select>
+        </label>
         <div class="prow"><span data-i18n="sys.aud_signal">Signal on the input</span>
           <div style="grid-column: span 2">
             <span class="m">L <span class="track"><span id="mInL"></span></span></span>
@@ -167,6 +189,7 @@
   <nav class="tabs">
     <button data-tab="rig" class="active" data-i18n="tab.rig">Rig</button>
     <button data-tab="files" data-i18n="tab.files">Files</button>
+    <button data-tab="stage" data-i18n="tab.stage">Stage</button>
     <button data-tab="tuner" data-i18n="tab.tuner">Tuner</button>
     <button data-tab="sys" data-i18n="tab.system">System</button>
   </nav>

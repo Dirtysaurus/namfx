@@ -273,6 +273,7 @@ int main(int argc, char** argv) {
     fx::AudioChoice ch;
     ch.device = a.value("device", "auto");
     ch.channel = a.value("channel", "auto");
+    ch.output = a.value("output", "same");
     return ch;
   };
   auto audioOptions = [&](const fx::AudioResolved& r) {
@@ -307,7 +308,7 @@ int main(int argc, char** argv) {
                 {"description", audioDesc}};
     if (!audioActive.missing.empty()) act["missing"] = audioActive.missing;
     json st = {{"cards", cards}, {"active", act},
-               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}}},
+               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}}},
                {"manual", captureGiven || playbackGiven || inChannelGiven}};
     if (!audioError.empty()) st["error"] = audioError;
     return st;

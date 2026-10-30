@@ -143,7 +143,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 
 ## 6. Hotspot (new in v0.3.1)
 
-- **Settings:** `data/settings.json` → `"hotspot": {"mode":"auto","ssid":"namfx","password":"namfx1234"}`.
+- **Settings:** `data/settings.json` → `"hotspot": {"mode":"auto","ssid":"namfx","password":"<random, 10 chars>"}`. The password is generated on first start (a fixed default would be public once the repo is) and shown in the web UI and the console footer.
 - **Modes:**
   - **auto:** no WiFi connection for 20 s → start the AP.
   - **always:** keep the AP up while namfx runs.
@@ -194,7 +194,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 ## 10. Open / not done (only on the owner's instruction)
 
 - **Sound test on the console** with the GO Twin: the owner is testing it now.
-- **Hotspot with the real WiFi chip** (RTL8723BU, runs as root from Ports). Test: start namfx from Ports, set *Own WiFi: Always* (or press *Start hotspot now* in the web UI), connect a phone to `namfx` / `namfx1234`, open `http://10.42.0.1`. Check afterwards that the console reconnects to the normal WiFi.
+- **Hotspot with the real WiFi chip** (RTL8723BU, runs as root from Ports). Test: start namfx from Ports, set *Own WiFi: Always* (or press *Start hotspot now* in the web UI), connect a phone to `namfx` with the password from System → Network (or `data/settings.json`), open `http://10.42.0.1`. Check afterwards that the console reconnects to the normal WiFi.
 - **Real LV2 packages** on the R36S (guitarix, x42) and measured loads of the new effect types.
 - **UI rework:**
   - The owner finds the control and menu "clunky".

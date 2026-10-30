@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <random>
 #include <set>
 #include "i18n.h"
 #include "dsp/engines.h"
@@ -56,6 +57,18 @@ Engine::Engine(const Config& cfg) : cfg_(cfg) {
     std::ifstream sf(dataPath("settings.json"));
     json st = json::parse(sf, nullptr, false);
     if (!st.is_discarded() && st.is_object()) settings_ = st;
+    // the hotspot password is random per console (a fixed default would be public knowledge)
+    json hs = settings_.value("hotspot", json::object());
+    if (!hs.is_object()) hs = json::object();
+    if (!hs.contains("password")) {
+      static const char kChars[] = "abcdefghjkmnpqrstuvwxyz23456789";
+      std::random_device rd;
+      std::string pw;
+      for (int i = 0; i < 10; ++i) pw += kChars[rd() % (sizeof(kChars) - 1)];
+      hs["password"] = pw;
+      settings_["hotspot"] = hs;
+      saveSettings();
+    }
   }
   CatalogPaths cp;
   cp.fxDir = cfg.fxDir;
@@ -500,7 +513,7 @@ json Engine::handleLocked(const json& c) {
         {"err.unknown_type", "Unknown block type"}, {"err.net_mode", "Invalid hotspot mode"},
         {"err.net_ssid", "Network name must have 1-32 characters"}, {"err.net_password", "Password must have 8-63 characters (letters, digits, symbols)"},
         {"err.net_unavailable", "Network control not available"},
-        {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
+        {"err.audio_output", "Invalid output device"}, {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
     auto it = en.find(code);
     std::string msg = it != en.end() ? it->second : code;
     if (!detail.empty()) msg += ": " + detail;
@@ -561,6 +574,17 @@ json Engine::handleLocked(const json& c) {
       const std::string ch = c["channel"].is_string() ? c["channel"].get<std::string>() : "";
       if (ch != "auto" && ch != "left" && ch != "right" && ch != "sum") return fail("err.audio_channel", ch);
       a["channel"] = ch;
+    }
+    if (c.contains("output")) {  // playback to another ALSA device (Bluetooth): "same" or "pcm:<name>"
+      const std::string o = c["output"].is_string() ? c["output"].get<std::string>() : "";
+      bool good = o == "same";
+      if (!good && o.rfind("pcm:", 0) == 0 && o.size() > 4 && o.size() <= 68) {
+        good = true;
+        for (size_t i = 4; i < o.size(); ++i)
+          if (!std::isalnum((unsigned char)o[i]) && std::string("_-:,.=").find(o[i]) == std::string::npos) good = false;
+      }
+      if (!good) return fail("err.audio_output", o);
+      a["output"] = o;
     }
     settings_["audio"] = a;
     saveSettings();

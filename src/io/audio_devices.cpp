@@ -93,6 +93,10 @@ AudioResolved resolveAudio(const std::vector<AudioCard>& cards, const AudioChoic
     // plughw converts the sample format (USB interfaces are often 24-bit packed)
     r.capture = r.playback = pick->usb ? "plughw:CARD=" + pick->id + ",DEV=0" : "hw:" + std::to_string(pick->index) + ",0";
   }
+  if (choice.output.rfind("pcm:", 0) == 0 && choice.output.size() > 4) {  // e.g. Bluetooth headphones through bluealsa / pulse
+    r.playback = choice.output.substr(4);
+    r.output = r.playback;
+  }
   r.channel = r.usb ? 0 : 1;
   if (choice.channel == "left") r.channel = 0;
   else if (choice.channel == "right") r.channel = 1;

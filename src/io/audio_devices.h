@@ -22,6 +22,7 @@ struct AudioCard {
 struct AudioChoice {
   std::string device = "auto";   // auto | internal | card:<id>
   std::string channel = "auto";  // auto | left | right | sum
+  std::string output = "same";   // same (as the input card) | pcm:<ALSA name>, e.g. pcm:bluealsa, pcm:pulse
 };
 
 struct AudioResolved {
@@ -29,6 +30,7 @@ struct AudioResolved {
   std::string capture = "hw:0,0", playback = "hw:0,0";
   std::string label;                // for the UIs
   std::string cardId;
+  std::string output;               // custom playback device ("" = the input card)
   std::string missing;              // the chosen card isn't there (unplugged): we fell back
   bool usb = false, found = false;  // found = a card was picked from the list
   int channel = 1;                  // 0 left, 1 right, 2 sum
