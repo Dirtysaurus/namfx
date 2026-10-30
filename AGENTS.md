@@ -131,6 +131,8 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 - **Audio input:**
   - `audio_set {device: auto|internal|card:<id>, channel: auto|left|right|sum}`: validated and saved in `data/settings.json` (`audio`), applied by the **main loop** (not under the engine lock) through `AudioDriver::restart()`; a failed start falls back to the internal card, then to the null driver
   - `audio_scan`: rescans the cards
+  - `audio_set` also takes `output: same|pcm:<ALSA name>` (e.g. `pcm:bluealsa`; Bluetooth is untested: needs the console's `aplay -L` to know the real name)
+  - Other new commands: `mute {on?}`, `undo`/`redo`, `metronome {on,bpm,volume}`, `gain_wizard {on}`. Optional `web_password` in `data/settings.json` turns on HTTP Basic auth (user `namfx`). The hotspot password is random per console. `.github/workflows/release.yml` builds an aarch64 tarball on `v*` tags (needs a public repo for the free arm runner)
   - State: `state.audio_dev` = `{cards[], active{device,label,usb,channel,capture,playback,description,missing?}, choice{device,channel}, manual, error?}` (`state.audio` is the older `{rate,block}` object)
   - Errors: `err.audio_device`, `err.audio_channel`
   - `--capture` / `--playback` / `--in-channel` win over the choice (`manual: true`)

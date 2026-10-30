@@ -71,6 +71,13 @@ bloku, z ní se počítá odhad CPU celého řetězce a pro každý typ se uklá
 (seznam pro přidání ji pak ukazuje se ✓). `./build/namfx --bench` změří všechny typy na stroji,
 na kterém běží.
 
+## Hotová binárka
+
+Po označení verze (`v*`) workflow `release` přeloží namfx na aarch64 a přiloží
+`namfx-<verze>-aarch64.tar.gz` k vydání na GitHubu. Rozbalte do `~/namfx` na konzoli
+(`tar -xzf ... -C ~`), složku `data/` nemění. Potřebuje běhové knihovny
+(`libasound2 libsdl2-2.0-0 liblilv-0-0`). Překlad na konzoli (níže) dál funguje.
+
 ## Instalace (SSH na konzoli)
 
 ```sh
@@ -260,7 +267,7 @@ Příkazy `{"cmd": …}`:
 - **presety a scény:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **nastavení a vstup:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **síť:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (stav) a `state.hotspot_cfg`
-- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `output: same|pcm:<ALSA jméno>` (např. `pcm:bluealsa`, `pcm:pulse` pro Bluetooth sluchátka), `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `metronome {on?, bpm 30-300, volume dB}` (klik přimíchaný za efekty, `state.metronome`; web: System → Metronom s tap tempem), `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `output: same|pcm:<ALSA jméno>` (např. `pcm:bluealsa`, `pcm:pulse` pro Bluetooth sluchátka), `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `gain_wizard {on}` (4 s poslechu, pak nastaví vstupní zesílení, aby nejhlasitější hra dosáhla −12 dBFS; `status.wizard`), `metronome {on?, bpm 30-300, volume dB}` (klik přimíchaný za efekty, `state.metronome`; web: System → Metronom s tap tempem), `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
 - **katalog efektů:** `fx_rescan`, `catalog_log`, `engines`
 
 Server posílá `state` (při změně) a `status` (10×/s: CPU, úrovně, zátěž bloků `loads`, ladička). Při změně katalogu se změní `state.catalog_version`.

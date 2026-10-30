@@ -215,6 +215,10 @@ function setStatus(m) {
   $('#stMute').textContent = m.muted ? t('ui.unmute', 'Unmute') : t('ui.mute', 'Mute');
   $('#mInL').style.width = w(m.in_l_db);
   $('#mInR').style.width = w(m.in_r_db);
+  const wz = m.wizard || {};
+  $('#wizBtn').disabled = !!wz.on;
+  $('#wizMsg').textContent = wz.on ? t('sys.wiz_play', 'Play your loudest chords…') :
+    wz.result === 'ok' ? t('sys.wiz_ok', 'Done: the input gain was set.') : wz.result === 'nosignal' ? t('sys.wiz_none', 'No signal on the input.') : '';
   const mb = $('#muteBtn');
   mb.textContent = m.muted ? t('ui.unmute', 'Unmute') : t('ui.mute', 'Mute');
   mb.style.color = m.muted ? 'var(--err)' : '';
@@ -796,6 +800,7 @@ function initSys() {
   $('#audOut').onchange = (e) => send({ cmd: 'audio_set', output: e.target.value });
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });
+  $('#wizBtn').onclick = () => send({ cmd: 'gain_wizard', on: true });
   $('#metBpm').onchange = (e) => send({ cmd: 'metronome', bpm: +e.target.value });
   $('#metVol').oninput = (e) => send({ cmd: 'metronome', volume: +e.target.value });
   $('#metOn').onclick = () => send({ cmd: 'metronome', on: !(S.state.metronome && S.state.metronome.on) });

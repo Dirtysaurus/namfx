@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Peter Hudak
 #pragma once
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -114,6 +115,12 @@ class Engine {
   // metering
   std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0}, rawL_{0}, rawR_{0};
   std::atomic<bool> muted_{false};
+
+  // input level wizard
+  std::atomic<bool> wizOn_{false};
+  std::atomic<float> wizMax_{0.0f};
+  std::chrono::steady_clock::time_point wizEnd_;
+  std::string wizResult_;  // "", "ok", "nosignal"
 
   // metronome (settings, not part of a preset); the phase state belongs to the audio thread
   std::atomic<bool> metOn_{false};

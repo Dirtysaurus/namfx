@@ -136,6 +136,9 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
   }
   const float gi = dbToLin(inGain_.load(std::memory_order_relaxed));
   float pin = 0;
+  float pre = 0;  // peak before the input gain (level wizard)
+  for (int i = 0; i < n; ++i) pre = std::max(pre, std::fabs(L[i]));
+  if (wizOn_.load(std::memory_order_relaxed)) wizMax_.store(std::max(pre, wizMax_.load(std::memory_order_relaxed)), std::memory_order_relaxed);
   for (int i = 0; i < n; ++i) {
     L[i] *= inSm_.next(gi);
     pin = std::max(pin, std::fabs(L[i]));
@@ -380,6 +383,7 @@ json Engine::status() {
             {"in_l_db", linToDb(rawL_.load())},
             {"in_r_db", linToDb(rawR_.load())},
             {"muted", muted_.load()},
+            {"wizard", {{"on", wizOn_.load()}, {"result", wizResult_}, {"peak_db", linToDb(wizMax_.load())}}},
             {"xruns", xruns_.load()},
             {"playing", playing_.load()},
             {"wav_pos", wavPos_.load() / cfg_.sampleRate},
@@ -414,6 +418,16 @@ void Engine::controlTick() {
     nd.block->control();
     for (auto& b : nd.a) b->control();
     for (auto& b : nd.b) b->control();
+  }
+  if (wizOn_.load() && std::chrono::steady_clock::now() >= wizEnd_) {  // input level wizard finished
+    wizOn_.store(false);
+    const float peak = wizMax_.load();
+    if (peak < 0.001f) wizResult_ = "nosignal";
+    else {
+      inGain_.store(clampf(-12.0f - linToDb(peak), -24.0f, 24.0f));  // loudest playing at about -12 dBFS
+      wizResult_ = "ok";
+    }
+    changed();
   }
   if (tunerOn_.load()) tunerRes_ = tuner_.analyze(a4_);
   if (++ticks_ % 40 == 0) updateMeasured();
@@ -804,6 +818,18 @@ json Engine::handleLocked(const json& c) {
     else if (k == "tuner_mute") tunerMute_.store(c.value("value", true));
     else if (k == "a4") a4_ = clampf(c.value("value", 440.0f), 430, 450);
     else return fail("err.unknown_key");
+    changed();
+    return ok();
+  }
+  if (cmd == "gain_wizard") {  // {on}: listen for 4 s to the loudest playing and set the input gain so that it peaks at -12 dBFS
+    if (c.value("on", true)) {
+      wizMax_.store(0.0f);
+      wizResult_.clear();
+      wizEnd_ = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+      wizOn_.store(true);
+    } else {
+      wizOn_.store(false);
+    }
     changed();
     return ok();
   }

@@ -1,0 +1,35 @@
+name: release
+# Tag a version (git tag v0.4.0 && git push --tags): builds namfx natively on aarch64 and attaches it to a GitHub release.
+# Needs a runner with the arm64 label; the free ubuntu-24.04-arm runner is available for public repositories.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  aarch64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git pkg-config libasound2-dev libsdl2-dev liblilv-dev lv2-dev libeigen3-dev
+      - run: ./tools/fetch_deps.sh
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j"$(nproc)"
+      - name: Package
+        run: |
+          mkdir -p dist/namfx
+          cp -r build/namfx web fonts fx ports tools docs LICENSE COMMERCIAL.md AUTHORS THIRD_PARTY.md README.md README.cs.md dist/namfx/
+          mkdir -p dist/namfx/build && mv dist/namfx/namfx dist/namfx/build/namfx
+          tar -C dist -czf namfx-${GITHUB_REF_NAME}-aarch64.tar.gz namfx
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" namfx-${GITHUB_REF_NAME}-aarch64.tar.gz \
+            --title "namfx $GITHUB_REF_NAME" --generate-notes
