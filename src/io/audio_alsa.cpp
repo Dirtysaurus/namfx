@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cerrno>
 #include <cstring>
 #include <vector>
 #include "engine.h"
@@ -74,6 +75,7 @@ static int setupPcm(snd_pcm_t* pcm, unsigned rate, snd_pcm_uframes_t period, uns
 #endif
 
 bool AudioDriver::start(bool nullDriver, std::string& err) {
+  lost_.store(false);
 #ifdef NAMFX_HAVE_ALSA
   if (!nullDriver) {
     const unsigned rate = (unsigned)eng_.config().sampleRate;
@@ -154,6 +156,7 @@ void AudioDriver::runAlsa() {
     if (cap) {
       snd_pcm_sframes_t got = snd_pcm_readi(cap, cbuf.data(), n);
       if (got < 0) {
+        if (got == -ENODEV || got == -EIO || got == -ENOTTY || got == -EBADFD) { lost_.store(true); break; }  // unplugged
         eng_.reportXrun();
         snd_pcm_recover(cap, (int)got, 1);
         if (snd_pcm_state(pb) != SND_PCM_STATE_RUNNING) { snd_pcm_prepare(pb); prefill(); }
@@ -179,6 +182,7 @@ void AudioDriver::runAlsa() {
     }
     snd_pcm_sframes_t w = snd_pcm_writei(pb, pbuf.data(), n);
     if (w < 0) {
+      if (w == -ENODEV || w == -EIO || w == -ENOTTY || w == -EBADFD) { lost_.store(true); break; }
       eng_.reportXrun();
       snd_pcm_recover(pb, (int)w, 1);
       prefill();

@@ -418,6 +418,10 @@ int main(int argc, char** argv) {
     const auto now = std::chrono::steady_clock::now();
     if (++tick % 2 == 0) eng.controlTick();
     if (now - lastNet > std::chrono::seconds(2)) { lastNet = now; screens.setNetInfo(netInfo()); }
+    if (audio.lost()) {  // USB interface unplugged while running: re-resolve (the missing card falls back to the internal one)
+      std::fprintf(stderr, "[audio] sound card lost - re-resolving\n");
+      audioApply = true;
+    }
     if (audioApply.exchange(false)) {  // new sound card / channel chosen
       fx::AudioResolved r = fx::resolveAudio(fx::scanAudioCards(), audioChoice());
       std::string e, failure;

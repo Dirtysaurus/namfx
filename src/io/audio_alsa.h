@@ -35,6 +35,8 @@ class AudioDriver {
     return start(nullDriver, err);
   }
   std::string description() const { return desc_; }
+  // true once the sound card vanished while running (USB unplugged); the thread has ended, restart with other devices
+  bool lost() const { return lost_.load(); }
 
  private:
   void runAlsa();
@@ -43,7 +45,7 @@ class AudioDriver {
   Engine& eng_;
   AudioOptions opt_;
   std::thread th_;
-  std::atomic<bool> run_{false};
+  std::atomic<bool> run_{false}, lost_{false};
   std::string desc_;
   void* cap_ = nullptr;
   void* pb_ = nullptr;
