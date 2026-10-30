@@ -342,6 +342,10 @@ int main(int argc, char** argv) {
   };
 
   fx::HttpServer server(port, webDir);
+  {  // optional: "web_password" in data/settings.json protects the web UI and uploads (user "namfx")
+    const json ws = eng.settings();
+    if (ws.contains("web_password") && ws["web_password"].is_string()) server.setPassword(ws["web_password"].get<std::string>());
+  }
   server.onWs([&](const std::string& text) -> std::string {
     json c = json::parse(text, nullptr, false);
     if (c.is_discarded()) return R"({"ok":false,"code":"err.json","error":"invalid JSON"})";

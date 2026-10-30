@@ -585,6 +585,8 @@
   "err.net_password": "Heslo musí mít 8–63 znaků (písmena, číslice, symboly)",
   "err.net_unavailable": "Ovládání sítě není dostupné",
   "menu.hotspot": "Vlastní WiFi",
+  "menu.mute": "Ztlumit výstup",
+  "menu.unmute": "Zrušit ztlumení výstupu",
   "sys.net_status": "Stav",
   "sys.net_na": "nedostupné",
   "sys.net_ap": "vlastní síť aktivní",

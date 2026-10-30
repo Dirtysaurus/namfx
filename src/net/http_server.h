@@ -34,6 +34,8 @@ class HttpServer {
   void setPort(int p) { port_ = p; }
   void onApi(ApiHandler h) { api_ = std::move(h); }
   void onWs(WsHandler h) { ws_ = std::move(h); }
+  // HTTP Basic auth for everything (pages, /ws, uploads): user "namfx" + this password. Empty = open. Set before start().
+  void setPassword(const std::string& pw);
   bool start(std::string& err);
   void stop();
   void broadcast(const std::string& text);  // thread-safe
@@ -63,6 +65,7 @@ class HttpServer {
   std::atomic<int> wsCount_{0};
   ApiHandler api_;
   WsHandler ws_;
+  std::string authToken_;  // base64("namfx:" + password), empty = no auth
 };
 
 }  // namespace fx

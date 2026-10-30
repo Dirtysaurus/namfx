@@ -177,6 +177,11 @@ tam i *Spustit / Zastavit hotspot teď*) nebo na konzoli (Start → Vlastní WiF
 známým sítím. Ovládání NetworkManageru potřebuje root, který spouštěč z Ports má; `--no-hotspot`
 funkci úplně vypne.
 
+**Heslo k webu (volitelné).** Webové UI, WebSocket i nahrávání souborů jsou ve výchozím stavu bez hesla,
+což je doma v pořádku, ale ne ve sdílené síti nebo na hotspotu. Přidejte do `data/settings.json`
+`"web_password": "vaše heslo"` a namfx restartujte: prohlížeč se pak zeptá na přihlášení (uživatel `namfx`
+a toto heslo).
+
 ## Zvukový vstup
 
 Zvukovou kartu vyberete ve webu (Systém → Zvukový vstup) nebo na konzoli (Start → Zvukový vstup):

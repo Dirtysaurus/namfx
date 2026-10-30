@@ -229,6 +229,8 @@ static const char* mimeOf(const std::string& p) {
   return "application/octet-stream";
 }
 
+void HttpServer::setPassword(const std::string& pw) { authToken_ = pw.empty() ? std::string() : base64("namfx:" + pw); }
+
 void HttpServer::serveStatic(const HttpRequest& r, HttpResponse& resp) {
   std::string p = r.path == "/" ? "/index.html" : r.path;
   if (p.find("..") != std::string::npos) { resp.status = 403; resp.body = "forbidden"; return; }
@@ -269,6 +271,18 @@ bool HttpServer::handleHttp(Conn& c) {
   r.body = c.in.substr(he + 4, len);
   c.in.erase(0, he + 4 + len);
 
+  if (!authToken_.empty()) {
+    const std::string want = "Basic " + authToken_;
+    const std::string got = r.headers.count("authorization") ? r.headers["authorization"] : std::string();
+    unsigned diff = (unsigned)(want.size() ^ got.size());  // constant-time compare
+    for (size_t i = 0; i < want.size() && i < got.size(); ++i) diff |= (unsigned)(want[i] ^ got[i]);
+    if (diff != 0) {
+      const std::string body = "authentication required";
+      c.out += "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"namfx\"\r\nContent-Type: text/plain\r\nContent-Length: " +
+               std::to_string(body.size()) + "\r\nConnection: keep-alive\r\n\r\n" + body;
+      return true;
+    }
+  }
   if (r.path == "/ws" && r.headers.count("sec-websocket-key")) {
     const std::string acc = base64(sha1(r.headers["sec-websocket-key"] + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
     c.out += "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + acc + "\r\n\r\n";

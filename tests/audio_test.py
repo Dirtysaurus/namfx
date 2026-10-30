@@ -7,7 +7,7 @@ Starts build/namfx with --null-audio and NAMFX_ASOUND_ROOT pointing to a fake tr
 GO Twin, ALSA loopback), then drives the WebSocket API. Needs `pip install websocket-client`.
     python3 tests/audio_test.py
 """
-import json, os, shutil, socket, subprocess, sys, tempfile, time, urllib.request
+import json, os, shutil, socket, subprocess, sys, tempfile, time, urllib.error, urllib.request
 from pathlib import Path
 import websocket
 
@@ -35,7 +35,7 @@ def make_asound(root: Path, with_usb=True):
 
 
 class Run:
-    def __init__(self, tmp: Path, extra=()):
+    def __init__(self, tmp: Path, extra=(), connect=True):
         s = socket.socket()
         s.bind(("127.0.0.1", 0))
         self.port = s.getsockname()[1]
@@ -48,14 +48,18 @@ class Run:
                                    "--port", str(self.port), *extra], cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT, text=True)
         self.ws = None
+        self.rid = 0
         for _ in range(100):
             try:
-                self.ws = websocket.create_connection(f"ws://127.0.0.1:{self.port}/ws", timeout=5)
+                if connect:
+                    self.ws = websocket.create_connection(f"ws://127.0.0.1:{self.port}/ws", timeout=5)
+                else:
+                    socket.create_connection(("127.0.0.1", self.port), timeout=1).close()
                 break
             except OSError:
                 time.sleep(0.1)
-        assert self.ws, "namfx did not start"
-        self.rid = 0
+        else:
+            raise AssertionError("namfx did not start")
 
     def cmd(self, **c):
         self.rid += 1
@@ -162,6 +166,28 @@ def main():
     try:
         a = r.audio()
         check(a["manual"] and a["active"]["capture"] == "hw:9,9", "--capture / --in-channel win and are reported as manual")
+    finally:
+        r.stop()
+
+    # optional web password: settings.json "web_password" -> HTTP Basic auth (user namfx)
+    (tmp / "data" / "settings.json").write_text(json.dumps({"web_password": "s3cret"}))
+    r = Run(tmp, connect=False)
+    try:
+        import base64
+        url = f"http://127.0.0.1:{r.port}/api/state"
+        try:
+            urllib.request.urlopen(url, timeout=5)
+            check(False, "a password-protected server refuses requests without credentials")
+        except urllib.error.HTTPError as e:
+            check(e.code == 401, "no credentials -> 401")
+        bad = urllib.request.Request(url, headers={"Authorization": "Basic " + base64.b64encode(b"namfx:wrong").decode()})
+        try:
+            urllib.request.urlopen(bad, timeout=5)
+            check(False, "wrong password is refused")
+        except urllib.error.HTTPError as e:
+            check(e.code == 401, "wrong password -> 401")
+        good = urllib.request.Request(url, headers={"Authorization": "Basic " + base64.b64encode(b"namfx:s3cret").decode()})
+        check(urllib.request.urlopen(good, timeout=5).status == 200, "right password -> 200")
     finally:
         r.stop()
     shutil.rmtree(tmp, ignore_errors=True)

@@ -177,6 +177,10 @@ in the web UI (System → Network, also *Start / Stop hotspot now*) or on the co
 NetworkManager reconnects to known networks. Controlling NetworkManager needs root, which the
 Ports launcher has; `--no-hotspot` turns the feature off completely.
 
+**Web password (optional).** The web UI, the WebSocket and uploads are open by default, which is fine
+at home but not on a shared network or the hotspot. Add `"web_password": "your password"` to
+`data/settings.json` and restart namfx: the browser then asks for a login (user `namfx`, that password).
+
 ## Audio input
 
 Pick the sound card in the web UI (System → Audio input) or on the console (Start → Audio input):

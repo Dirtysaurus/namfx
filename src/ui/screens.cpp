@@ -447,7 +447,7 @@ void Screens::press(Btn btn, bool repeat) {
       break;
     }
     case Mode::Menu: {
-      const int n = 14;
+      const int n = 15;
       if (btn == Btn::Up) menuSel_ = (menuSel_ + n - 1) % n;
       else if (btn == Btn::Down) menuSel_ = (menuSel_ + 1) % n;
       else if (btn == Btn::B || btn == Btn::Start) mode_ = Mode::Rig;
@@ -497,7 +497,8 @@ void Screens::press(Btn btn, bool repeat) {
             cmd({{"cmd", "net_set"}, {"mode", modes[(i + 1) % 3]}});
             break;
           }
-          case 13: quit_ = true; break;
+          case 13: cmd({{"cmd", "mute"}}); mode_ = Mode::Rig; break;
+          case 14: quit_ = true; break;
         }
       }
       break;
@@ -1047,15 +1048,16 @@ void Screens::drawMenu(Canvas& c) {
                                           T("menu.view", "Rig view") + ": " + (pedals_ ? T("view.pedals", "Pedalboard") : T("view.tiles", "Tiles")),
                                           T("menu.audio", "Audio input") + ": " + audioLabel(),
                                           T("menu.hotspot", "Own WiFi") + ": " + T("net." + state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto")), state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto"))),
+                                          state_.value("muted", false) ? T("menu.unmute", "Unmute output") : T("menu.mute", "Mute output"),
                                           T("menu.quit", "Quit and return to ES")};
   c.roundRect(150, 46, 340, 398, 10, col::panel);
   c.roundStroke(150, 46, 340, 398, 10, 1.5f, rgb(0xFFB300));
   c.text(170, 70, T("menu.title", "Menu"), bold_, 16, col::text);
   for (size_t i = 0; i < items.size(); ++i) {
-    const float y = 78 + i * 25.6f;
+    const float y = 76 + i * 24.0f;
     const bool sel = (int)i == menuSel_;
-    if (sel) c.roundRect(162, y, 316, 23, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
-    c.text(176, y + 16, c.ellipsize(items[i], sans_, 13, 290), sans_, 13, i == items.size() - 1 ? col::err : col::text);
+    if (sel) c.roundRect(162, y, 316, 22, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
+    c.text(176, y + 15, c.ellipsize(items[i], sans_, 13, 290), sans_, 13, i == items.size() - 1 ? col::err : col::text);
   }
 }
 
