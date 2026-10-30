@@ -33,11 +33,14 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
   - For builds: enlarge zram to 1G, stop EmulationStation, use `JOBS=1`.
   - The C++ compiler (`cc1plus`) gets OOM-killed otherwise.
 - **Audio:** ALSA `hw:0,0`, 48 kHz, period 128 (2.7 ms). The RK817 mic path is set with `amixer sset 'Capture MIC Path' 'Main Mic'`.
+  - **Jack input is right channel only.** Measured on the second (test) console with headphones as a microphone: the left channel is digital silence, the right one goes from about −60 to −6 dBFS when tapped. The default `--in-channel` is 0 (left) and `ports/NAMFX.sh` doesn't pass it, so the internal input needs `--in-channel 1`. Not yet checked on the main console. The jack is a mic input (bias, no instrument buffer), not a guitar input; the GO Twin is the intended input.
+  - The kernel log prints `ASoC: Failed to add route Mic Jack -> direct -> MIC_IN` (and the HPOL/HPOR routes) at boot. This is harmless: the BSP codec has no such DAPM widgets and the path is selected with the `Capture MIC Path` control.
 - **Measured CPU** (one A35 core):
   - Plexi preset: 35.8 % (2.8× realtime).
   - Dual Amp preset: 68.4 % (1.5× realtime).
   - The A35 is about 13× slower than the dev PC for NAM; engine costs are estimated as PC load × 20.
-- **WiFi:** the chip supports AP mode (`iw list`) and NetworkManager (`nmcli`) is present. On this board the internal WiFi shares the OTG USB D+/D− lines (conflict with USB audio).
+- **WiFi:** main console: internal **RTL8723BU** (WiFi + Bluetooth, USB `0bda:b720`) with the vendor driver `8723bu.ko` (`drivers/net/wireless/ew-7611ulb`). Its `iw list` reports `IBSS, managed, AP, P2P-client, P2P-GO` (checked 2026-10-30), so the hotspot can work. NetworkManager (`nmcli`) is present. The internal WiFi shares the OTG USB D+/D− lines (conflict with USB audio).
+- **Second (test) console:** has a different WiFi, an **MT7601U** USB dongle (`148f:7601`, `mt7601u.ko`) that offers only `managed` and `monitor`, **no AP**: the hotspot cannot run there. It also has an extra SPI flash chip; that work is a separate project (repo `Dirtysaurus/r36s-rescue`) and not part of namfx.
 - **USB audio:** the owner has a **TC Helicon GO Twin**.
   - UAC1 class-compliant, Hi-Z 470 kΩ, 44.1/48 kHz, 24-bit.
   - Use `plughw:CARD=…`, because S24_3LE is not supported natively.
@@ -145,7 +148,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 - **Leftover AP:** an AP left from a previous run is adopted, with the name and password taken from the config.
 - **Failed start:** retries after about 80 s (`noLinkSecs_ = -60`).
 - **UI:** console menu "Own WiFi: Auto/Always/Off" (cycles); web System → Network card. The footer shows `AP ssid / pw · ip`.
-- **Verified** only against a fake `nmcli` on PC. **Not yet verified with the real chip.**
+- **Verified** only against a fake `nmcli` on PC. **Not yet verified with the real chip.** The RTL8723BU in the main console reports AP mode, so there is no known blocker; the real test is open (see §10). A chip without AP just makes `nmcli … hotspot` fail: the error appears under System → Network and it is retried after about 80 s. No capability probe exists on purpose.
 
 ## 7. Conventions
 
@@ -183,7 +186,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 ## 10. Open / not done (only on the owner's instruction)
 
 - **Sound test on the console** with the GO Twin: the owner is testing it now.
-- **Hotspot with the real WiFi chip** (runs as root from Ports).
+- **Hotspot with the real WiFi chip** (RTL8723BU, runs as root from Ports). Test: start namfx from Ports, set *Own WiFi: Always* (or press *Start hotspot now* in the web UI), connect a phone to `namfx` / `namfx1234`, open `http://10.42.0.1`. Check afterwards that the console reconnects to the normal WiFi.
 - **Real LV2 packages** on the R36S (guitarix, x42) and measured loads of the new effect types.
 - **UI rework:**
   - The owner finds the control and menu "clunky".
