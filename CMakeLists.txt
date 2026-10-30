@@ -47,6 +47,7 @@ set(SRC
   src/dsp/tuner.cpp
   src/io/wav.cpp
   src/io/audio_alsa.cpp
+  src/io/audio_devices.cpp
   src/net/http_server.cpp
   src/net/hotspot.cpp
   src/ui/canvas.cpp

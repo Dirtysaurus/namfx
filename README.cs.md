@@ -126,8 +126,8 @@ Offline render bez zvukové karty, i na PC:
 --lang en|cs                       jazyk UI (jinak z data/settings.json, výchozí en)
 --port N                           web server (80 → 8080)
 --rate 48000 --block 128           vzorkování a perioda (128 = 2,7 ms)
---capture hw:0,0 --playback hw:0,0 ALSA zařízení, --capture '' = bez vstupu
---in-channel 0|1|2                 levý / pravý / součet
+--capture DEV --playback DEV       ALSA zařízení (výchozí: karta z Systém → Zvukový vstup), --capture '' = bez vstupu
+--in-channel 0|1|2                 levý / pravý / součet (výchozí: pravý u interního jacku, levý u USB)
 --cpu 3                            jádro audio vlákna (SCHED_FIFO 80)
 --null-audio                       bez zvukové karty (test UI)
 --no-display                       bez UI na displeji (tlačítka fungují dál)
@@ -176,6 +176,21 @@ tam i *Spustit / Zastavit hotspot teď*) nebo na konzoli (Start → Vlastní WiF
 `data/settings.json`. Po ukončení namfx se hotspot vypne a NetworkManager se znovu připojí ke
 známým sítím. Ovládání NetworkManageru potřebuje root, který spouštěč z Ports má; `--no-hotspot`
 funkci úplně vypne.
+
+## Zvukový vstup
+
+Zvukovou kartu vyberete ve webu (Systém → Zvukový vstup) nebo na konzoli (Start → Zvukový vstup):
+
+- **Auto** (výchozí): USB rozhraní (třeba TC Helicon GO Twin), pokud je připojené, jinak interní kodek.
+- **Interní:** vstup R36S.
+- **USB: název:** konkrétní rozhraní.
+
+Vstup a výstup vždy používají stejnou kartu, protože dvě karty mají každá své hodiny a rozcházejí se.
+Vstupní kanál je výchozí *Auto*: pravý u interního jacku (signál je jen tam), levý u USB; můžete vynutit
+levý, pravý nebo součet. Změna na chvíli restartuje zvuk. USB rozhraní připojte před spuštěním namfx, nebo
+stiskněte *Vyhledat zvukové karty* a vyberte ho. Volbu přebíjí `--capture`, `--playback` a `--in-channel`
+(stránka to napíše). Interní jack je mikrofonní vstup, ne kytarový; pro kytaru použijte USB rozhraní.
+Volba se ukládá do `data/settings.json`.
 
 ## Jazyky
 
@@ -235,6 +250,7 @@ Příkazy `{"cmd": …}`:
 - **presety a scény:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **nastavení a vstup:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **síť:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (stav) a `state.hotspot_cfg`
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual)
 - **katalog efektů:** `fx_rescan`, `catalog_log`, `engines`
 
 Server posílá `state` (při změně) a `status` (10×/s: CPU, úrovně, zátěž bloků `loads`, ladička). Při změně katalogu se změní `state.catalog_version`.

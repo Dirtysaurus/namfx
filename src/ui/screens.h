@@ -48,6 +48,8 @@ class Screens {
   void drawFiles(Canvas& c);
   void drawTuner(Canvas& c);
   void drawMenu(Canvas& c);
+  std::string audioLabel() const;
+  void cycleAudio();
   void drawPresets(Canvas& c);
   void drawKnob(Canvas& c, float cx, float cy, float r, float frac, Color col, bool active);
 

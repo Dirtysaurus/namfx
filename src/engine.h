@@ -51,6 +51,8 @@ class Engine {
   json settings();  // persisted UI settings (lang, theme, view, hotspot)
   // extensions living outside the engine (network): commands "net_*" not handled here + state part
   void setExtension(std::function<json(const json&)> cmd, std::function<json()> state) { extCmd_ = std::move(cmd); extState_ = std::move(state); }
+  // state part "audio_dev" (devices, active input); the commands audio_apply / audio_scan go to the extension
+  void setAudioState(std::function<json()> state) { audioState_ = std::move(state); }
   void touch() { changed(); }  // something outside the engine changed (state version bump)
 
  private:
@@ -78,6 +80,7 @@ class Engine {
   json settings_ = json::object();
   std::function<json(const json&)> extCmd_;
   std::function<json()> extState_;
+  std::function<json()> audioState_;
   std::map<std::string, float> measured_;  // type -> measured load [% of a core], persisted in data/cpu_stats.json
   bool measuredDirty_ = false;
   unsigned ticks_ = 0;

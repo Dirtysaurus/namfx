@@ -5,17 +5,20 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <unistd.h>
+#include <atomic>
 #include <csignal>
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <thread>
 #include <algorithm>
 #include "dsp/engines.h"
 #include "engine.h"
 #include "i18n.h"
 #include "io/audio_alsa.h"
+#include "io/audio_devices.h"
 #include "io/wav.h"
 #include "net/hotspot.h"
 #include "net/http_server.h"
@@ -53,9 +56,9 @@ static void usage() {
       "  --lang CODE         UI language (en, cs, ...), default from data/settings.json or en\n"
       "  --port N            web server (80, falls back to 8080)\n"
       "  --rate N --block N  sample rate (48000) and period (128)\n"
-      "  --capture DEV       ALSA input (hw:0,0), '' = no input\n"
-      "  --playback DEV      ALSA output (hw:0,0)\n"
-      "  --in-channel N      0 left, 1 right, 2 sum\n"
+      "  --capture DEV       ALSA input, '' = no input (default: the card chosen under System -> Audio)\n"
+      "  --playback DEV      ALSA output (default: the same card)\n"
+      "  --in-channel N      0 left, 1 right, 2 sum (default: right for the internal jack, left for USB)\n"
       "  --cpu N             CPU core for the audio thread (3)\n"
       "  --null-audio        no sound card (timer driven) - UI testing\n"
       "  --no-display        no on-screen UI (buttons still work)\n"
@@ -131,6 +134,7 @@ int main(int argc, char** argv) {
   std::string webDir = "web", fontDir = "fonts", lang, preset, wav, offIn, offOut, snapDir;
   int port = 80;
   bool nullAudio = false, noDisplay = false, printState = false, printCatalog = false, printLog = false, noHotspot = false;
+  bool captureGiven = false, playbackGiven = false, inChannelGiven = false;  // explicit options beat System -> Audio
   double bench = 0;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
@@ -148,9 +152,9 @@ int main(int argc, char** argv) {
     else if (a == "--port") port = std::stoi(next());
     else if (a == "--rate") cfg.sampleRate = std::stof(next());
     else if (a == "--block") cfg.block = std::stoi(next());
-    else if (a == "--capture") ao.capture = next();
-    else if (a == "--playback") ao.playback = next();
-    else if (a == "--in-channel") ao.inChannel = std::stoi(next());
+    else if (a == "--capture") { ao.capture = next(); captureGiven = true; }
+    else if (a == "--playback") { ao.playback = next(); playbackGiven = true; }
+    else if (a == "--in-channel") { ao.inChannel = std::stoi(next()); inChannelGiven = true; }
     else if (a == "--cpu") ao.cpu = std::stoi(next());
     else if (a == "--null-audio") nullAudio = true;
     else if (a == "--no-display") noDisplay = true;
@@ -262,19 +266,62 @@ int main(int argc, char** argv) {
   std::signal(SIGINT, onSignal);
   std::signal(SIGTERM, onSignal);
 
-  fx::AudioDriver audio(eng, ao);
+  // Sound card: --capture / --playback / --in-channel win; otherwise the choice from System -> Audio
+  // (data/settings.json "audio"): auto = a USB interface if one is plugged in, else the internal codec.
+  auto audioChoice = [&]() {
+    const json a = eng.settings().value("audio", json::object());
+    fx::AudioChoice ch;
+    ch.device = a.value("device", "auto");
+    ch.channel = a.value("channel", "auto");
+    return ch;
+  };
+  auto audioOptions = [&](const fx::AudioResolved& r) {
+    fx::AudioOptions o = ao;
+    if (!captureGiven) o.capture = r.capture;
+    if (!playbackGiven) o.playback = r.playback;
+    if (!inChannelGiven) o.inChannel = r.channel;
+    return o;
+  };
+  std::mutex audioMtx;  // guards audioActive, audioError (state() reads them from other threads)
+  fx::AudioResolved audioActive = fx::resolveAudio(fx::scanAudioCards(), audioChoice());
+  std::string audioError;
+  std::atomic<bool> audioApply{false};  // audio_set -> the main loop restarts the driver outside the engine lock
+
+  fx::AudioDriver audio(eng, audioOptions(audioActive));
   if (!audio.start(nullAudio, err)) {
     std::fprintf(stderr, "[audio] %s - falling back to the null driver\n", err.c_str());
+    audioError = err;
     audio.start(true, err);
   }
   std::printf("[audio] %s\n", audio.description().c_str());
+  std::string audioDesc = audio.description();  // copy: the driver's own string changes on restart
+  eng.setAudioState([&]() -> json {
+    json cards = json::array();
+    for (const auto& c : fx::scanAudioCards())
+      cards.push_back({{"id", c.id}, {"name", c.name}, {"index", c.index}, {"usb", c.usb}, {"usbid", c.usbid},
+                       {"capture", c.capture}, {"playback", c.playback}});
+    const json a = eng.settings().value("audio", json::object());
+    std::lock_guard<std::mutex> lk(audioMtx);
+    json act = {{"device", audioActive.device}, {"label", audioActive.label}, {"usb", audioActive.usb}, {"channel", audioActive.channel},
+                {"capture", captureGiven ? ao.capture : audioActive.capture}, {"playback", playbackGiven ? ao.playback : audioActive.playback},
+                {"description", audioDesc}};
+    if (!audioActive.missing.empty()) act["missing"] = audioActive.missing;
+    json st = {{"cards", cards}, {"active", act},
+               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}}},
+               {"manual", captureGiven || playbackGiven || inChannelGiven}};
+    if (!audioError.empty()) st["error"] = audioError;
+    return st;
+  });
 
   // WiFi hotspot fallback (NetworkManager); the network commands are routed through the engine
   fx::Hotspot hotspot([&] { return fx::HotspotConfig::fromJson(eng.settings().value("hotspot", json::object())); },
                       [&] { eng.touch(); });
   eng.setExtension(
       [&](const json& c) -> json {
-        if (c.value("cmd", "") == "net_hotspot") {
+        const std::string name = c.value("cmd", "");
+        if (name == "audio_apply") { audioApply = true; return {{"ok", true}}; }  // done by the main loop
+        if (name == "audio_scan") { eng.touch(); return {{"ok", true}}; }        // state() rescans the cards
+        if (name == "net_hotspot") {
           if (noHotspot) return {{"ok", false}, {"code", "err.net_unavailable"}, {"error", "Network control not available"}};
           hotspot.request(c.value("on", true));
           return {{"ok", true}};
@@ -371,6 +418,27 @@ int main(int argc, char** argv) {
     const auto now = std::chrono::steady_clock::now();
     if (++tick % 2 == 0) eng.controlTick();
     if (now - lastNet > std::chrono::seconds(2)) { lastNet = now; screens.setNetInfo(netInfo()); }
+    if (audioApply.exchange(false)) {  // new sound card / channel chosen
+      fx::AudioResolved r = fx::resolveAudio(fx::scanAudioCards(), audioChoice());
+      std::string e, failure;
+      if (!audio.restart(audioOptions(r), nullAudio, e)) {  // back to the internal codec, then to the null driver
+        failure = e;
+        std::fprintf(stderr, "[audio] %s - trying the internal input\n", e.c_str());
+        r = fx::resolveAudio(fx::scanAudioCards(), {"internal", "auto"});
+        if (!audio.restart(audioOptions(r), nullAudio, e)) {
+          std::fprintf(stderr, "[audio] %s - falling back to the null driver\n", e.c_str());
+          audio.restart(audioOptions(r), true, e);
+        }
+      }
+      std::printf("[audio] %s\n", audio.description().c_str());
+      {
+        std::lock_guard<std::mutex> lk(audioMtx);
+        audioActive = r;
+        audioError = failure;
+        audioDesc = audio.description();
+      }
+      eng.touch();
+    }
     pad.poll(onBtn);
     if (haveDisplay && !display.pollKeys(onBtn)) break;
     if (screens.update() && haveDisplay) {

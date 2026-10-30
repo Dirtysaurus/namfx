@@ -126,8 +126,8 @@ Offline rendering needs no sound card and also works on a PC:
 --lang en|cs                       UI language (else data/settings.json, default en)
 --port N                           web server (80 -> 8080)
 --rate 48000 --block 128           sample rate and period (128 = 2.7 ms)
---capture hw:0,0 --playback hw:0,0 ALSA devices, --capture '' = no input
---in-channel 0|1|2                 left / right / sum
+--capture DEV --playback DEV       ALSA devices (default: the card from System -> Audio input), --capture '' = no input
+--in-channel 0|1|2                 left / right / sum (default: right for the internal jack, left for USB)
 --cpu 3                            audio thread core (SCHED_FIFO 80)
 --null-audio                       no sound card (UI testing)
 --no-display                       no on-screen UI (buttons still work)
@@ -176,6 +176,22 @@ in the web UI (System → Network, also *Start / Stop hotspot now*) or on the co
 (Start → Own WiFi) and stored in `data/settings.json`. The hotspot stops when namfx quits and
 NetworkManager reconnects to known networks. Controlling NetworkManager needs root, which the
 Ports launcher has; `--no-hotspot` turns the feature off completely.
+
+## Audio input
+
+Pick the sound card in the web UI (System → Audio input) or on the console (Start → Audio input):
+
+- **Auto** (default): a USB interface (for example the TC Helicon GO Twin) when one is plugged in, otherwise the internal codec.
+- **Internal:** the R36S input.
+- **USB: name:** one specific interface.
+
+Input and output always use the same card, because two cards have separate clocks and drift apart. The
+input channel is *Auto* by default: the right channel for the internal jack (it only carries signal
+there), the left channel for USB; you can force left, right or the sum. A change restarts the audio for a
+moment. Plug the interface in before starting namfx, or press *Look for sound cards* and pick it.
+`--capture`, `--playback` and `--in-channel` override the choice (the page says so). The internal jack is a
+microphone input, not a guitar input; use a USB interface for the guitar. The choice is stored in
+`data/settings.json`.
 
 ## Languages
 
@@ -242,6 +258,7 @@ Commands are sent as `{"cmd": …}`:
 - **presets and scenes:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **settings and input:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **network:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (status) and `state.hotspot_cfg`
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (cards, active input, choice, manual)
 - **effect catalog:** `fx_rescan`, `catalog_log`, `engines`
 
 The server pushes `state` on every change and `status` 10× per second (CPU, levels, per-block load `loads`, tuner). When the catalog changes, `state.catalog_version` changes.

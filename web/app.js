@@ -682,6 +682,7 @@ function renderSys() {
   $('#tA4').value = st.globals.a4;
   $('#langSel').replaceChildren(...(st.langs || []).map((l) => el('option', { value: l.code, selected: l.code === st.lang }, l.name)));
   renderNet();
+  renderAudio();
   const ui = st.ui || {};
   $('#themeSel').replaceChildren(...THEMES.map(([k, en]) => el('option', { value: k, selected: k === (ui.theme || 'dark') }, t('theme.' + k, en))));
   [...$('#viewSeg').children].forEach((b) => b.classList.toggle('on', b.dataset.view === S.view));
@@ -692,6 +693,21 @@ function renderSys() {
     ['LV2', st.lv2 ? cnt((d) => d.source === 'lv2') : t('sys.lv2_off', 'not available in this build')],
     [t('sys.fx_missing', 'Missing types in this preset'), cnt((d) => d.source === 'missing')],
   ].flatMap(([k, v]) => [el('span', {}, k), el('b', {}, String(v))]));
+}
+
+function renderAudio() {
+  const au = (S.state && S.state.audio_dev) || {}, act = au.active || {}, ch = au.choice || {};
+  const cards = (au.cards || []).filter((c) => c.capture && c.playback && c.name !== 'Loopback');
+  const rows = [[t('sys.aud_active', 'In use'), act.label || act.capture || '-'], [t('sys.aud_channel', 'Input channel'), [t('aud.left', 'Left'), t('aud.right', 'Right'), t('aud.sum', 'Sum')][act.channel] || '-']];
+  if (act.missing) rows.push([t('sys.net_err', 'Error'), t('sys.aud_missing', 'card "{0}" is not connected', [act.missing])]);
+  if (au.error) rows.push([t('sys.net_err', 'Error'), au.error]);
+  if (au.manual) rows.push([t('sys.aud_manual', 'Note'), t('sys.aud_manual_val', 'started with --capture / --playback / --in-channel: the choice below is ignored')]);
+  $('#audInfo').replaceChildren(...rows.flatMap(([k, v]) => [el('span', {}, k), el('b', {}, String(v))]));
+  const opts = [['auto', t('aud.auto', 'Auto')], ['internal', t('aud.internal', 'Internal')], ...cards.filter((c) => c.usb).map((c) => ['card:' + c.id, `USB: ${c.name}`])];
+  const cur = ch.device || 'auto';
+  if (!opts.some(([v]) => v === cur)) opts.push([cur, cur.replace(/^card:/, '') + ' (' + t('aud.unplugged', 'not connected') + ')']);
+  if (document.activeElement !== $('#audDev')) $('#audDev').replaceChildren(...opts.map(([v, n]) => el('option', { value: v, selected: v === cur }, n)));
+  [...$('#audCh').children].forEach((b) => b.classList.toggle('on', b.dataset.ch === (ch.channel || 'auto')));
 }
 
 function renderNet() {
@@ -753,6 +769,9 @@ function initSys() {
   };
   $('#langSel').onchange = (e) => send({ cmd: 'set_lang', lang: e.target.value });
   $('#themeSel').onchange = (e) => send({ cmd: 'set_ui', theme: e.target.value });
+  $('#audDev').onchange = (e) => send({ cmd: 'audio_set', device: e.target.value });
+  [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
+  $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   [...$('#netMode').children].forEach((b) => (b.onclick = () => send({ cmd: 'net_set', mode: b.dataset.mode })));
   $('#netSave').onclick = () => send({ cmd: 'net_set', ssid: $('#netSsid').value, password: $('#netPass').value }, (r) => r.ok && toast(t('ui.saved', 'Saved'), true));
   $('#netStart').onclick = () => {

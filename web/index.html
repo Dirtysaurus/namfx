@@ -70,6 +70,23 @@
         </div>
       </div>
       <div class="card">
+        <h3 data-i18n="sys.aud_card">Audio input</h3>
+        <div class="kv" id="audInfo"></div>
+        <label class="prow"><span data-i18n="sys.aud_device">Sound card</span><select id="audDev" style="grid-column: span 2" aria-label="Sound card" data-i18n-attr="aria-label:sys.aud_device"></select></label>
+        <div class="prow"><span data-i18n="sys.aud_channel">Input channel</span>
+          <div class="seg" id="audCh" style="grid-column: span 2">
+            <button data-ch="auto" data-i18n="net.auto">Auto</button>
+            <button data-ch="left" data-i18n="aud.left">Left</button>
+            <button data-ch="right" data-i18n="aud.right">Right</button>
+            <button data-ch="sum" data-i18n="aud.sum">Sum</button>
+          </div>
+        </div>
+        <div class="transport">
+          <button class="pill" id="audScan" data-i18n="sys.aud_scan">Look for sound cards</button>
+        </div>
+        <p class="info" data-i18n="sys.aud_hint">Auto uses a USB interface (e.g. GO Twin) when one is plugged in, otherwise the internal input. Output goes to the same card. The internal jack only has signal on the right channel.</p>
+      </div>
+      <div class="card">
         <h3 data-i18n="sys.levels">Levels</h3>
         <label class="prow"><span data-i18n="sys.input_gain">Input gain</span><input type="range" id="gIn" min="-24" max="24" step="0.5"><output id="gInV"></output></label>
         <label class="prow"><span data-i18n="sys.output">Output</span><input type="range" id="gOut" min="-60" max="12" step="0.5"><output id="gOutV"></output></label>

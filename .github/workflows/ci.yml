@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git pkg-config libasound2-dev libsdl2-dev liblilv-dev lv2-dev libeigen3-dev python3-pip
+          pip install --break-system-packages websocket-client
+      - run: ./tools/fetch_deps.sh
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j"$(nproc)"
+      - name: Translations
+        run: python3 tools/i18n.py --check
+      - name: Sound card choice
+        run: python3 tests/audio_test.py

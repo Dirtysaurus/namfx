@@ -14,7 +14,7 @@ struct AudioOptions {
   std::string capture = "hw:0,0";   // "" = no input (WAV only)
   std::string playback = "hw:0,0";
   int periods = 2;
-  int inChannel = 0;                 // 0 = left, 1 = right, 2 = sum
+  int inChannel = 1;                 // 0 = left, 1 = right, 2 = sum (the RK817 jack is right only)
   int cpu = 3;                       // CPU core for the audio thread (-1 = any)
   int priority = 80;                 // SCHED_FIFO
 };
@@ -27,6 +27,13 @@ class AudioDriver {
   ~AudioDriver() { stop(); }
   bool start(bool nullDriver, std::string& err);
   void stop();
+  // Stops, switches to other devices / channel and starts again. Call it from outside the audio thread
+  // and outside the engine lock. On failure the driver is stopped (start the null driver or retry).
+  bool restart(const AudioOptions& o, bool nullDriver, std::string& err) {
+    stop();
+    opt_ = o;
+    return start(nullDriver, err);
+  }
   std::string description() const { return desc_; }
 
  private:

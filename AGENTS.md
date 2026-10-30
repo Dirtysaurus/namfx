@@ -33,7 +33,7 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
   - For builds: enlarge zram to 1G, stop EmulationStation, use `JOBS=1`.
   - The C++ compiler (`cc1plus`) gets OOM-killed otherwise.
 - **Audio:** ALSA `hw:0,0`, 48 kHz, period 128 (2.7 ms). The RK817 mic path is set with `amixer sset 'Capture MIC Path' 'Main Mic'`.
-  - **Jack input is right channel only.** Measured on the second (test) console with headphones as a microphone: the left channel is digital silence, the right one goes from about −60 to −6 dBFS when tapped. The default `--in-channel` is 0 (left) and `ports/NAMFX.sh` doesn't pass it, so the internal input needs `--in-channel 1`. Not yet checked on the main console. The jack is a mic input (bias, no instrument buffer), not a guitar input; the GO Twin is the intended input.
+  - **Jack input is right channel only.** Measured on the second (test) console with headphones as a microphone: the left channel is digital silence, the right one goes from about −60 to −6 dBFS when tapped. namfx therefore picks the channel itself (right for the internal jack, left for USB, see System → Audio input); `--in-channel` forces one. Not yet checked on the main console. The jack is a mic input (bias, no instrument buffer), not a guitar input; the GO Twin is the intended input.
   - The kernel log prints `ASoC: Failed to add route Mic Jack -> direct -> MIC_IN` (and the HPOL/HPOR routes) at boot. This is harmless: the BSP codec has no such DAPM widgets and the path is selected with the `Capture MIC Path` control.
 - **Measured CPU** (one A35 core):
   - Plexi preset: 35.8 % (2.8× realtime).
@@ -79,6 +79,7 @@ PC test recipes used so far:
 - **Offline render check of every effect type:** levels finite, no clipping at default settings.
 - **Fuzzing:** the WebSocket API under ASan and TSan. ASan shows only a lilv internal leak; TSan shows 0 warnings.
 - **Hotspot:** put a fake `nmcli` bash script on `PATH` that keeps its state in a file (`state:connection`). Cover auto after 20 s, manual stop/start, mode off, always, and renaming while running.
+- **Sound card choice:** `python3 tests/audio_test.py` (needs `pip install websocket-client` and a built `build/namfx`; runs namfx with `--null-audio` against a fake `/proc/asound` via `NAMFX_ASOUND_ROOT`). CI (`.github/workflows/ci.yml`) builds on Ubuntu and runs it together with the i18n check.
 - **i18n:** `python3 tools/i18n.py --check` regenerates `web/lang/en.json` from the sources and lists the keys missing in `cs.json` (currently 602/602).
 
 ## 4. Architecture (src/)
@@ -94,7 +95,8 @@ PC test recipes used so far:
 | `dsp/graph.*` | Chain with an A/B split. Becomes stereo after the first block whose `def->stereo` is set. Per-block load is an EMA, reported as `loads`. |
 | `dsp/dsp_util.h` | `enableFlushToZero()` (aarch64 FPCR FZ, x86 FTZ/DAZ; call it in every audio thread – denormals cost a lot), Biquad, OnePole, Allpass, DelayLine, `fastSin2pi`/`fastTri`/`fastTanh`, Rng, lock-free `Swap<T>`. |
 | `dsp/nam_block.cpp`, `convolver`, `fft`, `tuner` | NAM wrapper, IR convolution, tuner. |
-| `io/audio_alsa.*`, `io/wav.*` | ALSA I/O (SCHED_FIFO 80 on `--cpu`), WAV read/write (16/24/32-bit). |
+| `io/audio_alsa.*`, `io/wav.*` | ALSA I/O (SCHED_FIFO 80 on `--cpu`), WAV read/write (16/24/32-bit). `AudioDriver::restart()` switches cards. |
+| `io/audio_devices.*` | Finds sound cards in `/proc/asound` (or `$NAMFX_ASOUND_ROOT`, used by the tests) and resolves the choice. `auto` = first USB duplex card (`plughw:CARD=<id>,DEV=0`), else the internal one (`hw:N,0`); input and output always from one card; channel auto = left for USB, right for the internal jack. ALSA loopback is never picked. |
 | `net/http_server.*` | Static files, `/ws`, `GET /api/state`, `POST /api/upload?kind=nam\|ir\|wav\|presets\|fx&name=…`, `POST /api/delete`. Uploading kind `fx` triggers `fx_rescan`. |
 | `net/hotspot.*` | WiFi AP fallback via `nmcli`, started with `posix_spawnp` (no shell). Details in §6. |
 | `ui/screens.*` | On-screen UI: rig (tiles/pedals), edit, add (source filter on Y), tuner, menu (13 items). Theme palette via `applyTheme`. `status_` is initialised in the constructor – a null value crashed it before (`type_error.306`). |
@@ -126,6 +128,12 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 - **Settings and input:**
   - `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport`
   - `set_lang {lang}`, `set_ui {theme,view}`
+- **Audio input:**
+  - `audio_set {device: auto|internal|card:<id>, channel: auto|left|right|sum}`: validated and saved in `data/settings.json` (`audio`), applied by the **main loop** (not under the engine lock) through `AudioDriver::restart()`; a failed start falls back to the internal card, then to the null driver
+  - `audio_scan`: rescans the cards
+  - State: `state.audio_dev` = `{cards[], active{device,label,usb,channel,capture,playback,description,missing?}, choice{device,channel}, manual, error?}` (`state.audio` is the older `{rate,block}` object)
+  - Errors: `err.audio_device`, `err.audio_channel`
+  - `--capture` / `--playback` / `--in-channel` win over the choice (`manual: true`)
 - **Network:**
   - `net_set {mode:auto|always|off, ssid (1–32 printable), password (8–63 ASCII)}`
   - `net_hotspot {on}`

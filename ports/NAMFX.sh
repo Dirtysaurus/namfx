@@ -14,13 +14,14 @@ OLD_GOV=$(cat "$GOV" 2>/dev/null)
 echo performance | sudo tee "$GOV" > /dev/null 2>&1
 
 # Route the RK817 input to the mic path (control name as in dArkOS; harmless if missing).
+# The sound card (USB interface or this internal codec) is chosen inside namfx: System -> Audio input.
 amixer -q sset 'Capture MIC Path' 'Main Mic' 2>/dev/null || true
 
 cd "$APP" || exit 1
 printf "\033c" > /dev/tty1 2>/dev/null
 sudo SDL_VIDEO_DRIVER=KMSDRM ./build/namfx \
   --data "$APP/data" --web "$APP/web" --fonts "$APP/fonts" --fx "$APP/fx" \
-  --capture hw:0,0 --playback hw:0,0 --block 128 \
+  --block 128 \
   "$@" > "$LOG" 2>&1
 
 # files uploaded via the web were created by root - give them back to ark

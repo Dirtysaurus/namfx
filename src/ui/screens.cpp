@@ -447,7 +447,7 @@ void Screens::press(Btn btn, bool repeat) {
       break;
     }
     case Mode::Menu: {
-      const int n = 13;
+      const int n = 14;
       if (btn == Btn::Up) menuSel_ = (menuSel_ + n - 1) % n;
       else if (btn == Btn::Down) menuSel_ = (menuSel_ + 1) % n;
       else if (btn == Btn::B || btn == Btn::Start) mode_ = Mode::Rig;
@@ -488,7 +488,8 @@ void Screens::press(Btn btn, bool repeat) {
             break;
           }
           case 10: cmd({{"cmd", "set_ui"}, {"view", pedals_ ? "tiles" : "pedals"}}); break;
-          case 11: {
+          case 11: cycleAudio(); break;
+          case 12: {
             static const char* modes[] = {"auto", "always", "off"};
             const std::string cur = state_.value("hotspot_cfg", json::object()).value("mode", "auto");
             int i = 0;
@@ -496,7 +497,7 @@ void Screens::press(Btn btn, bool repeat) {
             cmd({{"cmd", "net_set"}, {"mode", modes[(i + 1) % 3]}});
             break;
           }
-          case 12: quit_ = true; break;
+          case 13: quit_ = true; break;
         }
       }
       break;
@@ -999,6 +1000,33 @@ void Screens::drawTuner(Canvas& c) {
   drawFooter(c, {{"Select/B", T("hint.back", "back")}, {"◀▶", "A4"}, {"A", T("hint.mute", "mute/unmute")}});
 }
 
+// menu text for the audio input: the choice and, for "auto", what it resolved to
+std::string Screens::audioLabel() const {
+  const json au = state_.value("audio_dev", json::object());
+  const std::string dev = au.value("choice", json::object()).value("device", std::string("auto"));
+  if (dev == "internal") return T("aud.internal", "Internal");
+  if (dev == "auto") {
+    const std::string act = au.value("active", json::object()).value("label", std::string());
+    return T("aud.auto", "Auto") + (act.empty() ? "" : " (" + act + ")");
+  }
+  const std::string id = dev.substr(dev.rfind(':') == std::string::npos ? 0 : dev.rfind(':') + 1);
+  for (const auto& c : au.value("cards", json::array()))
+    if (c.value("id", std::string()) == id) return "USB " + c.value("name", id);
+  return id + " (" + T("aud.unplugged", "not connected") + ")";
+}
+
+// Start -> Audio input: auto -> internal -> each USB interface -> auto ...
+void Screens::cycleAudio() {
+  const json au = state_.value("audio_dev", json::object());
+  std::vector<std::string> devs = {"auto", "internal"};
+  for (const auto& c : au.value("cards", json::array()))
+    if (c.value("usb", false) && c.value("capture", false) && c.value("playback", false)) devs.push_back("card:" + c.value("id", std::string()));
+  const std::string cur = au.value("choice", json::object()).value("device", std::string("auto"));
+  size_t i = 0;
+  for (size_t k = 0; k < devs.size(); ++k) if (devs[k] == cur) i = k;
+  cmd({{"cmd", "audio_set"}, {"device", devs[(i + 1) % devs.size()]}});
+}
+
 void Screens::drawMenu(Canvas& c) {
   drawRig(c);
   c.rect(0, 40, 640, 406, rgba(0x000000, 170));
@@ -1017,16 +1045,17 @@ void Screens::drawMenu(Canvas& c) {
                                           T("menu.language", "Language") + ": " + langName,
                                           T("menu.theme", "Theme") + ": " + T("theme." + state_.value("ui", json::object()).value("theme", std::string("dark")), state_.value("ui", json::object()).value("theme", std::string("dark"))),
                                           T("menu.view", "Rig view") + ": " + (pedals_ ? T("view.pedals", "Pedalboard") : T("view.tiles", "Tiles")),
+                                          T("menu.audio", "Audio input") + ": " + audioLabel(),
                                           T("menu.hotspot", "Own WiFi") + ": " + T("net." + state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto")), state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto"))),
                                           T("menu.quit", "Quit and return to ES")};
   c.roundRect(150, 46, 340, 398, 10, col::panel);
   c.roundStroke(150, 46, 340, 398, 10, 1.5f, rgb(0xFFB300));
   c.text(170, 70, T("menu.title", "Menu"), bold_, 16, col::text);
   for (size_t i = 0; i < items.size(); ++i) {
-    const float y = 78 + i * 27.6f;
+    const float y = 78 + i * 25.6f;
     const bool sel = (int)i == menuSel_;
-    if (sel) c.roundRect(162, y, 316, 25, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
-    c.text(176, y + 17, c.ellipsize(items[i], sans_, 13, 290), sans_, 13, i == items.size() - 1 ? col::err : col::text);
+    if (sel) c.roundRect(162, y, 316, 23, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
+    c.text(176, y + 16, c.ellipsize(items[i], sans_, 13, 290), sans_, 13, i == items.size() - 1 ? col::err : col::text);
   }
 }
 

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Peter Hudak
 #include "engine.h"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
@@ -321,6 +322,7 @@ json Engine::state() {
           {"catalog_version", catalogVersion()},
           {"hotspot_cfg", settings_.value("hotspot", json::object())},
           {"network", extState_ ? extState_() : json::object()},
+          {"audio_dev", audioState_ ? audioState_() : json::object()},
           {"lv2", lv2Available()},
           {"files", filesJson()},
           {"audio", {{"rate", cfg_.sampleRate}, {"block", cfg_.block}}}};
@@ -438,7 +440,8 @@ json Engine::handleLocked(const json& c) {
         {"err.lang", "Language not available"}, {"err.file", "File error"},
         {"err.unknown_type", "Unknown block type"}, {"err.net_mode", "Invalid hotspot mode"},
         {"err.net_ssid", "Network name must have 1-32 characters"}, {"err.net_password", "Password must have 8-63 characters (letters, digits, symbols)"},
-        {"err.net_unavailable", "Network control not available"}};
+        {"err.net_unavailable", "Network control not available"},
+        {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
     auto it = en.find(code);
     std::string msg = it != en.end() ? it->second : code;
     if (!detail.empty()) msg += ": " + detail;
@@ -482,7 +485,31 @@ json Engine::handleLocked(const json& c) {
     changed();
     return ok();
   }
-  if (cmd.rfind("net_", 0) == 0 && extCmd_) return extCmd_(c);
+  if (cmd == "audio_set") {  // which sound card / input channel to use (applied by the main loop)
+    json a = settings_.value("audio", json::object());
+    if (c.contains("device")) {
+      const std::string d = c["device"].is_string() ? c["device"].get<std::string>() : "";
+      bool good = d == "auto" || d == "internal";
+      if (!good && d.rfind("card:", 0) == 0 && d.size() > 5 && d.size() <= 37) {
+        good = true;
+        for (size_t i = 5; i < d.size(); ++i)
+          if (!std::isalnum((unsigned char)d[i]) && d[i] != '_' && d[i] != '-') good = false;
+      }
+      if (!good) return fail("err.audio_device", d);
+      a["device"] = d;
+    }
+    if (c.contains("channel")) {
+      const std::string ch = c["channel"].is_string() ? c["channel"].get<std::string>() : "";
+      if (ch != "auto" && ch != "left" && ch != "right" && ch != "sum") return fail("err.audio_channel", ch);
+      a["channel"] = ch;
+    }
+    settings_["audio"] = a;
+    saveSettings();
+    if (extCmd_) extCmd_({{"cmd", "audio_apply"}});
+    changed();
+    return ok();
+  }
+  if ((cmd.rfind("net_", 0) == 0 || cmd.rfind("audio_", 0) == 0) && extCmd_) return extCmd_(c);
   if (cmd == "set_ui") {
     for (const char* k : {"theme", "view"})
       if (c.contains(k) && c[k].is_string() && safeName(c[k].get<std::string>())) settings_[k] = c[k];
