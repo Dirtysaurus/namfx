@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <set>
 #include "i18n.h"
 #include "dsp/engines.h"
 #include "dsp/lv2_host.h"
@@ -325,6 +326,8 @@ json Engine::state() {
           {"network", extState_ ? extState_() : json::object()},
           {"audio_dev", audioState_ ? audioState_() : json::object()},
           {"muted", muted_.load()},
+          {"can_undo", !undo_.empty()},
+          {"can_redo", !redo_.empty()},
           {"lv2", lv2Available()},
           {"files", filesJson()},
           {"audio", {{"rate", cfg_.sampleRate}, {"block", cfg_.block}}}};
@@ -425,7 +428,33 @@ bool Engine::setWavInput(const std::string& file, bool loop, std::string& err) {
 json Engine::handle(const json& cmd) {
   std::lock_guard<std::recursive_mutex> lk(mtx_);
   try {
-    return handleLocked(cmd);
+    const std::string name = cmd.value("cmd", "");
+    if (name == "undo" || name == "redo") {
+      auto& from = name == "undo" ? undo_ : redo_;
+      auto& to = name == "undo" ? redo_ : undo_;
+      if (from.empty()) return {{"ok", false}, {"code", "err.nothing_to_undo"}, {"error", "Nothing to undo"}};
+      const json now = chainJson();
+      const json target = from.back();
+      std::string err;
+      if (!chainFromJson(target, err)) return {{"ok", false}, {"code", "err.file"}, {"error", err}};
+      from.pop_back();
+      to.push_back(now);
+      changed();
+      return {{"ok", true}};
+    }
+    // structural edits can be undone (parameter tweaks are not recorded: too frequent)
+    static const std::set<std::string> kUndoable = {"add_block", "add_split", "remove", "move", "move_to_lane", "set_on", "set_file"};
+    const bool undoable = kUndoable.count(name) > 0;
+    const json before = undoable ? chainJson() : json();
+    json r = handleLocked(cmd);
+    if (undoable && r.value("ok", false)) {
+      undo_.push_back(before);
+      if (undo_.size() > 30) undo_.erase(undo_.begin());
+      redo_.clear();
+    } else if (name == "preset_load" || name == "preset_new") {
+      if (r.value("ok", false)) { undo_.clear(); redo_.clear(); }
+    }
+    return r;
   } catch (const std::exception& e) {
     return {{"ok", false}, {"error", e.what()}};
   }
@@ -438,7 +467,7 @@ json Engine::handleLocked(const json& c) {
   auto fail = [](const std::string& code, const std::string& detail = "") {
     static const std::map<std::string, std::string> en = {
         {"err.block_not_found", "Block not found"}, {"err.unknown_param", "Unknown parameter"},
-        {"err.invalid_name", "Invalid file name"}, {"err.split_not_found", "Split not found"},
+        {"err.invalid_name", "Invalid file name"}, {"err.nothing_to_undo", "Nothing to undo"}, {"err.split_not_found", "Split not found"},
         {"err.position_not_found", "Position not found"}, {"err.cannot_move", "Cannot move further"},
         {"err.preset_write", "Cannot write preset"}, {"err.scene_not_found", "Scene not found"},
         {"err.unknown_key", "Unknown setting"}, {"err.unknown_command", "Unknown command"},

@@ -220,6 +220,8 @@ function setStatus(m) {
 function renderAll() {
   const st = S.state;
   if (!st || !S.catalog.length) return;
+  $('#undoBtn').disabled = !st.can_undo;
+  $('#redoBtn').disabled = !st.can_redo;
   const pl = st.files.presets;
   const idx = pl.indexOf(st.preset.file);
   $('#pnum').textContent = 'PRESET ' + (idx >= 0 ? String(idx + 1).padStart(2, '0') : '--') + ' · ' + t('ui.cpu_estimate', 'CPU estimate {0} %', [Math.round(st.cpu_est)]);
@@ -778,6 +780,8 @@ function initSys() {
   [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });
+  $('#undoBtn').onclick = () => send({ cmd: 'undo' });
+  $('#redoBtn').onclick = () => send({ cmd: 'redo' });
   [...$('#netMode').children].forEach((b) => (b.onclick = () => send({ cmd: 'net_set', mode: b.dataset.mode })));
   $('#netSave').onclick = () => send({ cmd: 'net_set', ssid: $('#netSsid').value, password: $('#netPass').value }, (r) => r.ok && toast(t('ui.saved', 'Saved'), true));
   $('#netStart').onclick = () => {

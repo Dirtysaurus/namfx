@@ -146,6 +146,15 @@ def main():
         check(r.cmd(cmd="mute", on=True)["ok"], "mute accepted")
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
             check(json.load(resp)["muted"] is True, "state reports muted")
+        def chain_len():
+            with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+                return len(json.load(resp)["chain"])
+        r.cmd(cmd="preset_new")
+        check(chain_len() == 0, "new preset is empty")
+        check(not r.cmd(cmd="undo")["ok"], "nothing to undo in a fresh preset")
+        check(r.cmd(cmd="add_block", type="volume")["ok"] and chain_len() == 1, "block added")
+        check(r.cmd(cmd="undo")["ok"] and chain_len() == 0, "undo removes the added block")
+        check(r.cmd(cmd="redo")["ok"] and chain_len() == 1, "redo puts it back")
         r.cmd(cmd="mute")  # toggle back
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
             check(json.load(resp)["muted"] is False, "mute toggles back")

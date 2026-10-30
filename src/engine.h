@@ -80,6 +80,7 @@ class Engine {
   Config cfg_;
   std::recursive_mutex mtx_;
   std::vector<Node> nodes_;
+  std::vector<json> undo_, redo_;  // chain snapshots (structural edits), cleared when a preset is loaded
   int nextId_ = 1;
   std::string presetName_ = "New preset", presetFile_;
   json scenes_ = json::array();

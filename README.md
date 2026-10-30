@@ -262,7 +262,7 @@ Commands are sent as `{"cmd": …}`:
 - **presets and scenes:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **settings and input:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **network:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (status) and `state.hotspot_cfg`
-- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (cards, active input, choice, manual); `mute {on?}` panic mute (fades the output, toggles without `on`), `state.muted`; `status` also has `in_l_db` / `in_r_db` (raw capture peaks per channel)
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (cards, active input, choice, manual); `undo` / `redo` (structural edits: add, remove, move, bypass, file change; last 30; `state.can_undo`/`can_redo`), `mute {on?}` panic mute (fades the output, toggles without `on`), `state.muted`; `status` also has `in_l_db` / `in_r_db` (raw capture peaks per channel)
 - **effect catalog:** `fx_rescan`, `catalog_log`, `engines`
 
 The server pushes `state` on every change and `status` 10× per second (CPU, levels, per-block load `loads`, tuner). When the catalog changes, `state.catalog_version` changes.
