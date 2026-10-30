@@ -52,6 +52,7 @@ Engine::Engine(const Config& cfg) : cfg_(cfg) {
   inSm_.reset(1.0f);
   outSm_.reset(1.0f);
   tuner_.prepare(cfg.sampleRate);
+  loopBuf_.assign((size_t)(cfg.sampleRate * 30.0f) * 2, 0.0f);
   for (const char* d : {"nam", "ir", "presets", "wav", "fx", "lv2"}) fs::create_directories(dataPath(d));
   {
     std::ifstream sf(dataPath("settings.json"));
@@ -159,6 +160,44 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
     pout = std::max(pout, std::max(std::fabs(l), std::fabs(r)));
     outL[i] = clampf(l, -1.0f, 1.0f);
     outR[i] = clampf(r, -1.0f, 1.0f);
+  }
+  {  // looper: records / plays back the finished (stereo) output, before the metronome
+    const int req = loopReq_.exchange(0, std::memory_order_relaxed);
+    const int cap = (int)loopBuf_.size() / 2;
+    if (req == 1) {  // record: starts from empty, a second press ends the take and starts the playback
+      if (loopState_ == 1) { loopLen_ = loopPos_; loopPos_ = 0; loopState_ = loopLen_ > 0 ? 2 : 0; }
+      else if (loopState_ == 0) { loopLen_ = 0; loopPos_ = 0; loopState_ = 1; }
+    } else if (req == 2) {  // play (from the start)
+      if (loopLen_ > 0 && loopState_ != 1) { loopPos_ = 0; loopState_ = 2; }
+    } else if (req == 3) {  // overdub on / off
+      if (loopState_ == 2) loopState_ = 3;
+      else if (loopState_ == 3) loopState_ = 2;
+    } else if (req == 4) {  // stop
+      if (loopState_ == 1) { loopLen_ = loopPos_; loopPos_ = 0; loopState_ = loopLen_ > 0 ? 4 : 0; }
+      else if (loopState_ != 0) loopState_ = 4;
+    } else if (req == 5) {  // clear
+      loopState_ = 0; loopLen_ = 0; loopPos_ = 0;
+    }
+    if (loopState_ != 0 && loopState_ != 4) {
+      for (int i = 0; i < n; ++i) {
+        if (loopState_ == 1) {
+          loopBuf_[2 * loopPos_] = outL[i];
+          loopBuf_[2 * loopPos_ + 1] = outR[i];
+          if (++loopPos_ >= cap) { loopLen_ = loopPos_; loopPos_ = 0; loopState_ = 2; }  // buffer full: ends the take
+        } else {
+          const float l = loopBuf_[2 * loopPos_], r = loopBuf_[2 * loopPos_ + 1];
+          if (loopState_ == 3) {
+            loopBuf_[2 * loopPos_] = clampf(l + outL[i], -1.0f, 1.0f);
+            loopBuf_[2 * loopPos_ + 1] = clampf(r + outR[i], -1.0f, 1.0f);
+          }
+          outL[i] = clampf(outL[i] + l, -1.0f, 1.0f);
+          outR[i] = clampf(outR[i] + r, -1.0f, 1.0f);
+          if (++loopPos_ >= loopLen_) loopPos_ = 0;
+        }
+      }
+    }
+    loopStateA_.store(loopState_, std::memory_order_relaxed);
+    loopSecs_.store((float)(loopState_ == 1 ? loopPos_ : loopLen_) / cfg_.sampleRate, std::memory_order_relaxed);
   }
   if (metOn_.load(std::memory_order_relaxed) && !muted_.load(std::memory_order_relaxed)) {  // metronome click, mixed after the effects
     const double spb = cfg_.sampleRate * 60.0 / metBpm_.load(std::memory_order_relaxed);  // samples per beat
@@ -367,6 +406,8 @@ json Engine::state() {
           {"audio_dev", audioState_ ? audioState_() : json::object()},
           {"muted", muted_.load()},
           {"metronome", {{"on", metOn_.load()}, {"bpm", metBpm_.load()}, {"volume", metVol_.load()}}},
+          {"looper", {{"state", std::vector<std::string>{"empty", "rec", "play", "overdub", "stopped"}[std::clamp(loopStateA_.load(), 0, 4)]},
+                      {"seconds", loopSecs_.load()}, {"max_seconds", (float)(loopBuf_.size() / 2) / cfg_.sampleRate}}},
           {"can_undo", !undo_.empty()},
           {"can_redo", !redo_.empty()},
           {"lv2", lv2Available()},
@@ -830,6 +871,15 @@ json Engine::handleLocked(const json& c) {
     } else {
       wizOn_.store(false);
     }
+    changed();
+    return ok();
+  }
+  if (cmd == "looper") {  // {action: rec | play | overdub | stop | clear}
+    const std::string a = c.value("action", "");
+    static const std::map<std::string, int> acts = {{"rec", 1}, {"play", 2}, {"overdub", 3}, {"stop", 4}, {"clear", 5}};
+    const auto it = acts.find(a);
+    if (it == acts.end()) return fail("err.unknown_key");
+    loopReq_.store(it->second);
     changed();
     return ok();
   }

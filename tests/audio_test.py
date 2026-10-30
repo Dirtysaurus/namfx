@@ -177,6 +177,24 @@ def main():
             if m.get("t") == "status":
                 res = m.get("wizard", {}).get("result", "")
         check(res == "nosignal", "no input signal -> wizard reports nosignal and keeps the gain")
+        def looper():
+            with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+                return json.load(resp)["looper"]
+        check(looper()["state"] == "empty", "looper starts empty")
+        r.cmd(cmd="looper", action="rec")
+        time.sleep(0.6)
+        check(looper()["state"] == "rec" and looper()["seconds"] > 0.2, "looper records")
+        r.cmd(cmd="looper", action="rec")
+        time.sleep(0.2)
+        lp = looper()
+        check(lp["state"] == "play" and lp["seconds"] > 0.2, "second press closes the loop and plays")
+        r.cmd(cmd="looper", action="overdub")
+        time.sleep(0.2)
+        check(looper()["state"] == "overdub", "overdub")
+        r.cmd(cmd="looper", action="clear")
+        time.sleep(0.2)
+        check(looper()["state"] == "empty", "clear")
+        check(not r.cmd(cmd="looper", action="bogus")["ok"], "unknown looper action refused")
         r.cmd(cmd="mute")  # toggle back
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
             check(json.load(resp)["muted"] is False, "mute toggles back")

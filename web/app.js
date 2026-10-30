@@ -702,6 +702,10 @@ function renderSys() {
   $('#langSel').replaceChildren(...(st.langs || []).map((l) => el('option', { value: l.code, selected: l.code === st.lang }, l.name)));
   renderNet();
   renderAudio();
+  const lp = st.looper || { state: 'empty', seconds: 0, max_seconds: 30 };
+  const lpNames = { empty: t('sys.loop_s_empty', 'empty'), rec: t('sys.loop_s_rec', 'recording'), play: t('sys.loop_s_play', 'playing'), overdub: t('sys.loop_s_over', 'overdubbing'), stopped: t('sys.loop_s_stop', 'stopped') };
+  $('#loopInfo').replaceChildren(el('div', {}, `${lpNames[lp.state] || lp.state} · ${lp.seconds.toFixed(1)} / ${Math.round(lp.max_seconds)} s`));
+  ['rec', 'play', 'over', 'stop'].forEach((k) => $('#loop' + k[0].toUpperCase() + k.slice(1)).classList.toggle('on', (k === 'over' ? 'overdub' : k) === lp.state));
   const me = st.metronome || { on: false, bpm: 100, volume: -12 };
   if (document.activeElement !== $('#metBpm')) $('#metBpm').value = Math.round(me.bpm);
   $('#metVol').value = me.volume;
@@ -800,6 +804,8 @@ function initSys() {
   $('#audOut').onchange = (e) => send({ cmd: 'audio_set', output: e.target.value });
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });
+  for (const [id, action] of [['loopRec', 'rec'], ['loopPlay', 'play'], ['loopOver', 'overdub'], ['loopStop', 'stop'], ['loopClear', 'clear']])
+    $('#' + id).onclick = () => send({ cmd: 'looper', action });
   $('#wizBtn').onclick = () => send({ cmd: 'gain_wizard', on: true });
   $('#metBpm').onchange = (e) => send({ cmd: 'metronome', bpm: +e.target.value });
   $('#metVol').oninput = (e) => send({ cmd: 'metronome', volume: +e.target.value });

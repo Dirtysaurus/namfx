@@ -116,6 +116,12 @@ class Engine {
   std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0}, rawL_{0}, rawR_{0};
   std::atomic<bool> muted_{false};
 
+  // looper (30 s stereo); state lives in the audio thread, loopStateA_/loopSecs_ are for the UIs
+  std::vector<float> loopBuf_;
+  std::atomic<int> loopReq_{0}, loopStateA_{0};
+  std::atomic<float> loopSecs_{0.0f};
+  int loopState_ = 0, loopPos_ = 0, loopLen_ = 0;  // 0 empty, 1 rec, 2 play, 3 overdub, 4 stopped
+
   // input level wizard
   std::atomic<bool> wizOn_{false};
   std::atomic<float> wizMax_{0.0f};

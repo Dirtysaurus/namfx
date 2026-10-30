@@ -118,6 +118,18 @@
         <p class="info" data-i18n="sys.aud_hint">Auto uses a USB interface (e.g. GO Twin) when one is plugged in, otherwise the internal input. Output goes to the same card. The internal jack only has signal on the right channel.</p>
       </div>
       <div class="card">
+        <h3 data-i18n="sys.looper">Looper</h3>
+        <div class="kv" id="loopInfo"></div>
+        <div class="transport">
+          <button class="pill" id="loopRec" data-i18n="sys.loop_rec">Record</button>
+          <button class="pill" id="loopPlay" data-i18n="sys.loop_play">Play</button>
+          <button class="pill" id="loopOver" data-i18n="sys.loop_over">Overdub</button>
+          <button class="pill" id="loopStop" data-i18n="sys.loop_stop">Stop</button>
+          <button class="pill" id="loopClear" data-i18n="sys.loop_clear">Clear</button>
+        </div>
+        <p class="info" data-i18n="sys.loop_hint">Records what you hear (after the effects). Record starts, press it again to close the loop and play it. Overdub layers more on top.</p>
+      </div>
+      <div class="card">
         <h3 data-i18n="sys.metro">Metronome</h3>
         <label class="prow"><span>BPM</span><input type="number" id="metBpm" min="30" max="300" step="1" value="100"><button class="pill" id="metTap" data-i18n="sys.tap">Tap</button></label>
         <label class="prow"><span data-i18n="sys.metro_vol">Volume</span><input type="range" id="metVol" min="-40" max="0" step="1"><output id="metVolV"></output></label>
