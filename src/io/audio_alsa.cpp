@@ -163,6 +163,12 @@ void AudioDriver::runAlsa() {
         snd_pcm_start(cap);
         continue;
       }
+      float pl = 0, pr = 0;
+      for (int i = 0; i < n; ++i) {
+        pl = std::max(pl, std::fabs(toF(cbuf.data(), i * capCh_, capFmt_)));
+        if (capCh_ > 1) pr = std::max(pr, std::fabs(toF(cbuf.data(), i * capCh_ + 1, capFmt_)));
+      }
+      eng_.reportInputPeaks(pl, capCh_ > 1 ? pr : pl);
       for (int i = 0; i < n; ++i) {
         if (opt_.inChannel == 2 && capCh_ > 1) in[i] = 0.5f * (toF(cbuf.data(), i * capCh_, capFmt_) + toF(cbuf.data(), i * capCh_ + 1, capFmt_));
         else in[i] = toF(cbuf.data(), i * capCh_ + std::min(opt_.inChannel, capCh_ - 1), capFmt_);

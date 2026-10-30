@@ -131,7 +131,8 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
   if (tuner) tuner_.push(L, n);
   if (g) g->process(L, R, n);
   else std::memcpy(R, L, n * sizeof(float));
-  const float go = (tuner && tunerMute_.load(std::memory_order_relaxed)) ? 0.0f : dbToLin(outGain_.load(std::memory_order_relaxed));
+  const bool silent = (tuner && tunerMute_.load(std::memory_order_relaxed)) || muted_.load(std::memory_order_relaxed);
+  const float go = silent ? 0.0f : dbToLin(outGain_.load(std::memory_order_relaxed));
   float pout = 0;
   for (int i = 0; i < n; ++i) {
     const float g2 = outSm_.next(go);
@@ -323,6 +324,7 @@ json Engine::state() {
           {"hotspot_cfg", settings_.value("hotspot", json::object())},
           {"network", extState_ ? extState_() : json::object()},
           {"audio_dev", audioState_ ? audioState_() : json::object()},
+          {"muted", muted_.load()},
           {"lv2", lv2Available()},
           {"files", filesJson()},
           {"audio", {{"rate", cfg_.sampleRate}, {"block", cfg_.block}}}};
@@ -334,6 +336,9 @@ json Engine::status() {
             {"cpu", cpu_.load() * 100.0f},
             {"in_db", linToDb(pi)},
             {"out_db", linToDb(po)},
+            {"in_l_db", linToDb(rawL_.load())},
+            {"in_r_db", linToDb(rawR_.load())},
+            {"muted", muted_.load()},
             {"xruns", xruns_.load()},
             {"playing", playing_.load()},
             {"wav_pos", wavPos_.load() / cfg_.sampleRate},
@@ -721,6 +726,11 @@ json Engine::handleLocked(const json& c) {
     else if (k == "tuner_mute") tunerMute_.store(c.value("value", true));
     else if (k == "a4") a4_ = clampf(c.value("value", 440.0f), 430, 450);
     else return fail("err.unknown_key");
+    changed();
+    return ok();
+  }
+  if (cmd == "mute") {  // panic mute: the output fades to silence (outSm_), "on" omitted = toggle
+    muted_.store(c.contains("on") ? c.value("on", true) : !muted_.load());
     changed();
     return ok();
   }

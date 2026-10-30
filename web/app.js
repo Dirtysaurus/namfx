@@ -207,6 +207,11 @@ function setStatus(m) {
   const w = (db) => Math.max(0, Math.min(100, ((db + 60) / 60) * 100)) + '%';
   $('#mIn').style.width = w(m.in_db);
   $('#mOut').style.width = w(m.out_db);
+  $('#mInL').style.width = w(m.in_l_db);
+  $('#mInR').style.width = w(m.in_r_db);
+  const mb = $('#muteBtn');
+  mb.textContent = m.muted ? t('ui.unmute', 'Unmute') : t('ui.mute', 'Mute');
+  mb.style.color = m.muted ? 'var(--err)' : '';
   if (m.loads) document.querySelectorAll('[data-load]').forEach((e) => { e.textContent = fmtLoad(m.loads[e.dataset.load]); });
   if (S.tab === 'tuner') renderTuner(m.tuner);
   if (S.tab === 'sys') renderSysInfo();
@@ -772,6 +777,7 @@ function initSys() {
   $('#audDev').onchange = (e) => send({ cmd: 'audio_set', device: e.target.value });
   [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
+  $('#muteBtn').onclick = () => send({ cmd: 'mute' });
   [...$('#netMode').children].forEach((b) => (b.onclick = () => send({ cmd: 'net_set', mode: b.dataset.mode })));
   $('#netSave').onclick = () => send({ cmd: 'net_set', ssid: $('#netSsid').value, password: $('#netPass').value }, (r) => r.ok && toast(t('ui.saved', 'Saved'), true));
   $('#netStart').onclick = () => {

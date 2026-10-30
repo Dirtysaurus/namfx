@@ -139,6 +139,12 @@ def main():
         make_asound(asound, with_usb=True)  # plugged in again, the choice is still card:Twin
         r.cmd(cmd="audio_set", device="card:Twin")
         r.wait(lambda a: a["active"]["device"] == "card:Twin" and "missing" not in a["active"], "plugged in again")
+        check(r.cmd(cmd="mute", on=True)["ok"], "mute accepted")
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            check(json.load(resp)["muted"] is True, "state reports muted")
+        r.cmd(cmd="mute")  # toggle back
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            check(json.load(resp)["muted"] is False, "mute toggles back")
     finally:
         r.stop()
 

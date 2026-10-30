@@ -24,6 +24,7 @@
       <span id="cpu" class="cpu">CPU –</span>
       <span class="m">IN <span class="track"><span id="mIn"></span></span></span>
       <span class="m">OUT <span class="track"><span id="mOut"></span></span></span>
+      <button class="pill" id="muteBtn" data-i18n="ui.mute">Mute</button>
       <span id="conn" class="conn off">offline</span>
     </div>
   </header>
@@ -79,6 +80,12 @@
             <button data-ch="left" data-i18n="aud.left">Left</button>
             <button data-ch="right" data-i18n="aud.right">Right</button>
             <button data-ch="sum" data-i18n="aud.sum">Sum</button>
+          </div>
+        </div>
+        <div class="prow"><span data-i18n="sys.aud_signal">Signal on the input</span>
+          <div style="grid-column: span 2">
+            <span class="m">L <span class="track"><span id="mInL"></span></span></span>
+            <span class="m">R <span class="track"><span id="mInR"></span></span></span>
           </div>
         </div>
         <div class="transport">

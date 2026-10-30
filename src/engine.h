@@ -45,6 +45,13 @@ class Engine {
   void process(const float* in, float* outL, float* outR, int n);
   void reportCpu(float load) { cpu_.store(cpu_.load() * 0.9f + load * 0.1f); }
   void reportXrun() { xruns_.fetch_add(1); }
+  // raw capture peaks per channel (before channel choice and input gain), for the "which channel carries signal" meters
+  void reportInputPeaks(float l, float r) {
+    rawL_.store(std::max(l, rawL_.load(std::memory_order_relaxed) * 0.94f), std::memory_order_relaxed);
+    rawR_.store(std::max(r, rawR_.load(std::memory_order_relaxed) * 0.94f), std::memory_order_relaxed);
+  }
+  bool muted() const { return muted_.load(); }
+  void setMuted(bool m) { muted_.store(m); }
 
   const Config& config() const { return cfg_; }
   std::string dataPath(const std::string& sub) const { return cfg_.dataDir + "/" + sub; }
@@ -104,7 +111,8 @@ class Engine {
   std::atomic<size_t> wavPos_{0}, wavLen_{0};
 
   // metering
-  std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0};
+  std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0}, rawL_{0}, rawR_{0};
+  std::atomic<bool> muted_{false};
   std::atomic<unsigned> xruns_{0};
   std::atomic<unsigned> version_{1};
 };
