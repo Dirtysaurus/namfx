@@ -147,7 +147,7 @@ Offline render bez zvukové karty, i na PC:
 | Úprava bloku | ▲▼ parametr, ◀▶ hodnota (držet = rychle), L1/R1 hrubě, **A** na řádku souboru = výběr modelu/IR, X bypass, B zpět |
 | Přidat blok | ◀▶ kategorie / seznam, ▲▼ posun, L1/R1 stránka, **Y** filtr zdroje (vše, vestavěné, vlastní typy, LV2), **A** vložit, **B** zpět |
 | Ladička | ◀▶ A4, A ztlumit/pustit výstup, B zpět |
-| Menu | uložit/načíst preset, posun a mazání bloku, WAV vstup, jazyk, motiv, zobrazení rigu (dlaždice / pedalboard), vlastní WiFi (Auto / Vždy / Vypnuto), ukončit |
+| Menu | stránky: **Preset** (uložit, načíst), **Blok** (posun, smazání), **Vstup a zvuk** (WAV vstup, zvuková karta, metronom zap/vyp), **Nastavení** (jazyk, motiv, zobrazení rigu, vlastní WiFi); na horní úrovni také *Ztlumit výstup* a ukončení. **B** vrací o úroveň zpět |
 
 Klávesnice (běh na PC v okně): šipky, Enter=A, Esc=B, X, Y, Q/W=L1/R1, 1/2=L2/R2, Tab=Select, mezerník=Start.
 

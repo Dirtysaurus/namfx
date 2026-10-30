@@ -147,7 +147,7 @@ Offline rendering needs no sound card and also works on a PC:
 | Edit block | **▲▼** parameter, **◀▶** value (hold = fast), **L1/R1** coarse, **A** on the file row picks a model/IR, **X** bypass, **B** back |
 | Add block | **◀▶** categories / list, **▲▼** move, **L1/R1** page, **Y** source filter (all, built-in, my types, LV2), **A** insert, **B** back |
 | Tuner | **◀▶** A4, **A** mute/unmute output, **B** back |
-| Menu | save/load preset, move/delete block, WAV input, language, theme, rig view (tiles / pedalboard), own WiFi (Auto / Always / Off), quit |
+| Menu | pages: **Preset** (save, load), **Block** (move, delete), **Input and sound** (WAV input, audio card, metronome on/off), **Settings** (language, theme, rig view, own WiFi); top level also *Mute output* and quit. **B** goes back one level |
 
 Keyboard (PC window): arrows, Enter=A, Esc=B, X, Y, Q/W=L1/R1, 1/2=L2/R2, Tab=Select, Space=Start.
 

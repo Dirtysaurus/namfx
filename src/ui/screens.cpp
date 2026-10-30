@@ -347,6 +347,7 @@ void Screens::press(Btn btn, bool repeat) {
         mode_ = Mode::Tuner;
       } else if (btn == Btn::Start) {
         menuSel_ = 0;
+        menuPage_ = 0;
         mode_ = Mode::Menu;
       }
       break;
@@ -447,14 +448,22 @@ void Screens::press(Btn btn, bool repeat) {
       break;
     }
     case Mode::Menu: {
-      const int n = 15;
+      const auto entries = menuEntries();
+      const int n = (int)entries.size();
+      if (menuSel_ >= n) menuSel_ = 0;
       if (btn == Btn::Up) menuSel_ = (menuSel_ + n - 1) % n;
       else if (btn == Btn::Down) menuSel_ = (menuSel_ + 1) % n;
-      else if (btn == Btn::B || btn == Btn::Start) mode_ = Mode::Rig;
-      else if (btn == Btn::A) {
+      else if (btn == Btn::Start) mode_ = Mode::Rig;
+      else if (btn == Btn::B) {
+        if (menuPage_ != 0) { menuPage_ = 0; menuSel_ = 0; }
+        else mode_ = Mode::Rig;
+      } else if (btn == Btn::A) {
         const Cell cc = cells_[cur_];
         const bool inp = state_["input"]["source"] == "wav";
-        switch (menuSel_) {
+        const int id = entries[menuSel_].id;
+        if (id >= 100) { menuPage_ = id - 100; menuSel_ = 0; break; }
+        if (id == 99) { menuPage_ = 0; menuSel_ = 0; break; }
+        switch (id) {
           case 0: cmd({{"cmd", "preset_save"}}); toast(T("ui.preset_saved", "Preset saved")); mode_ = Mode::Rig; break;
           case 1: presetSel_ = 0; mode_ = Mode::Presets; break;
           case 2: if (cc.kind == 'b' || cc.kind == 's') cmd({{"cmd", "move"}, {"id", cc.id}, {"dir", -1}}); mode_ = Mode::Rig; break;
@@ -499,6 +508,7 @@ void Screens::press(Btn btn, bool repeat) {
           }
           case 13: cmd({{"cmd", "mute"}}); mode_ = Mode::Rig; break;
           case 14: quit_ = true; break;
+          case 15: cmd({{"cmd", "metronome"}, {"on", !state_.value("metronome", json::object()).value("on", false)}}); break;
         }
       }
       break;
@@ -1028,36 +1038,56 @@ void Screens::cycleAudio() {
   cmd({{"cmd", "audio_set"}, {"device", devs[(i + 1) % devs.size()]}});
 }
 
+std::vector<Screens::MenuEntry> Screens::menuEntries() {
+  const bool wav = state_["input"]["source"] == "wav";
+  const std::string wavf = state_["input"]["file"];
+  std::string langName = state_.value("lang", "en");
+  for (auto& l : state_["langs"]) if (l["code"] == langName) langName = l["name"];
+  const std::string theme = state_.value("ui", json::object()).value("theme", std::string("dark"));
+  const std::string hotspot = state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto"));
+  const json met = state_.value("metronome", json::object());
+  const std::string back = "< " + T("menu.back", "Back");
+  switch (menuPage_) {
+    case 1:
+      return {{T("menu.save", "Save preset"), 0}, {T("menu.load", "Load preset..."), 1}, {back, 99}};
+    case 2:
+      return {{T("menu.move_left", "Move block left"), 2}, {T("menu.move_right", "Move block right"), 3}, {T("menu.delete", "Delete block"), 4}, {back, 99}};
+    case 3:
+      return {{wav ? fmtArgs(T("menu.wav_next", "WAV input: next file ({0})"), {wavf}) : T("menu.wav_input", "Input from WAV file"), 5},
+              {status_.value("playing", false) ? T("menu.wav_stop", "Stop WAV") : T("menu.wav_play", "Play WAV"), 6},
+              {T("menu.live", "Live input (guitar)"), 7},
+              {T("menu.audio", "Audio input") + ": " + audioLabel(), 11},
+              {T("menu.metronome", "Metronome") + ": " + std::to_string((int)std::lround(met.value("bpm", 100.0))) + " BPM " +
+                   (met.value("on", false) ? T("menu.on", "on") : T("menu.off", "off")), 15},
+              {back, 99}};
+    case 4:
+      return {{T("menu.language", "Language") + ": " + langName, 8},
+              {T("menu.theme", "Theme") + ": " + T("theme." + theme, theme), 9},
+              {T("menu.view", "Rig view") + ": " + (pedals_ ? T("view.pedals", "Pedalboard") : T("view.tiles", "Tiles")), 10},
+              {T("menu.hotspot", "Own WiFi") + ": " + T("net." + hotspot, hotspot), 12},
+              {back, 99}};
+    default:
+      return {{T("menu.sub_preset", "Preset") + "  >", 101},
+              {T("menu.sub_block", "Block") + "  >", 102},
+              {T("menu.sub_input", "Input and sound") + "  >", 103},
+              {T("menu.sub_settings", "Settings") + "  >", 104},
+              {state_.value("muted", false) ? T("menu.unmute", "Unmute output") : T("menu.mute", "Mute output"), 13},
+              {T("menu.quit", "Quit and return to ES"), 14}};
+  }
+}
+
 void Screens::drawMenu(Canvas& c) {
   drawRig(c);
   c.rect(0, 40, 640, 406, rgba(0x000000, 170));
-  const bool wav = state_["input"]["source"] == "wav";
-  std::string wavf = state_["input"]["file"];
-  std::string langName = state_.value("lang", "en");
-  for (auto& l : state_["langs"]) if (l["code"] == langName) langName = l["name"];
-  const std::vector<std::string> items = {T("menu.save", "Save preset"),
-                                          T("menu.load", "Load preset..."),
-                                          T("menu.move_left", "Move block left"),
-                                          T("menu.move_right", "Move block right"),
-                                          T("menu.delete", "Delete block"),
-                                          wav ? fmtArgs(T("menu.wav_next", "WAV input: next file ({0})"), {wavf}) : T("menu.wav_input", "Input from WAV file"),
-                                          status_.value("playing", false) ? T("menu.wav_stop", "Stop WAV") : T("menu.wav_play", "Play WAV"),
-                                          T("menu.live", "Live input (guitar)"),
-                                          T("menu.language", "Language") + ": " + langName,
-                                          T("menu.theme", "Theme") + ": " + T("theme." + state_.value("ui", json::object()).value("theme", std::string("dark")), state_.value("ui", json::object()).value("theme", std::string("dark"))),
-                                          T("menu.view", "Rig view") + ": " + (pedals_ ? T("view.pedals", "Pedalboard") : T("view.tiles", "Tiles")),
-                                          T("menu.audio", "Audio input") + ": " + audioLabel(),
-                                          T("menu.hotspot", "Own WiFi") + ": " + T("net." + state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto")), state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto"))),
-                                          state_.value("muted", false) ? T("menu.unmute", "Unmute output") : T("menu.mute", "Mute output"),
-                                          T("menu.quit", "Quit and return to ES")};
+  const auto items = menuEntries();
   c.roundRect(150, 46, 340, 398, 10, col::panel);
   c.roundStroke(150, 46, 340, 398, 10, 1.5f, rgb(0xFFB300));
   c.text(170, 70, T("menu.title", "Menu"), bold_, 16, col::text);
   for (size_t i = 0; i < items.size(); ++i) {
-    const float y = 76 + i * 24.0f;
+    const float y = 82 + i * 32.0f;
     const bool sel = (int)i == menuSel_;
-    if (sel) c.roundRect(162, y, 316, 22, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
-    c.text(176, y + 15, c.ellipsize(items[i], sans_, 13, 290), sans_, 13, i == items.size() - 1 ? col::err : col::text);
+    if (sel) c.roundRect(162, y, 316, 28, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
+    c.text(176, y + 19, c.ellipsize(items[i].label, sans_, 14, 290), sans_, 14, items[i].id == 14 ? col::err : col::text);
   }
 }
 

@@ -99,7 +99,7 @@ PC test recipes used so far:
 | `io/audio_devices.*` | Finds sound cards in `/proc/asound` (or `$NAMFX_ASOUND_ROOT`, used by the tests) and resolves the choice. `auto` = first USB duplex card (`plughw:CARD=<id>,DEV=0`), else the internal one (`hw:N,0`); input and output always from one card; channel auto = left for USB, right for the internal jack. ALSA loopback is never picked. |
 | `net/http_server.*` | Static files, `/ws`, `GET /api/state`, `POST /api/upload?kind=nam\|ir\|wav\|presets\|fx&name=…`, `POST /api/delete`. Uploading kind `fx` triggers `fx_rescan`. |
 | `net/hotspot.*` | WiFi AP fallback via `nmcli`, started with `posix_spawnp` (no shell). Details in §6. |
-| `ui/screens.*` | On-screen UI: rig (tiles/pedals), edit, add (source filter on Y), tuner, menu (13 items). Theme palette via `applyTheme`. `status_` is initialised in the constructor – a null value crashed it before (`type_error.306`). |
+| `ui/screens.*` | On-screen UI: rig (tiles/pedals), edit, add (source filter on Y), tuner, menu (pages: preset, block, input and sound, settings; `menuEntries()` gives label + action id). Theme palette via `applyTheme`. `status_` is initialised in the constructor – a null value crashed it before (`type_error.306`). |
 | `ui/canvas.*`, `display.cpp`, `input_evdev.cpp` | Software canvas using stb_truetype, SDL2/KMSDRM output, evdev gamepad. |
 | `i18n.*` | `T("key","English fallback")`, shared with the web UI through `web/lang/*.json`. |
 

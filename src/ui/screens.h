@@ -47,6 +47,8 @@ class Screens {
   void drawAdd(Canvas& c);
   void drawFiles(Canvas& c);
   void drawTuner(Canvas& c);
+  struct MenuEntry { std::string label; int id; };  // id: action, 99 = back, 100+n = open page n
+  std::vector<MenuEntry> menuEntries();
   void drawMenu(Canvas& c);
   std::string audioLabel() const;
   void cycleAudio();
@@ -63,7 +65,7 @@ class Screens {
   std::string curId_;
   int scroll_ = 0;
   Mode mode_ = Mode::Rig;
-  int editSel_ = 0, addCat_ = 0, addFx_ = 0, fileSel_ = 0, menuSel_ = 0, presetSel_ = 0;
+  int editSel_ = 0, addCat_ = 0, addFx_ = 0, fileSel_ = 0, menuSel_ = 0, menuPage_ = 0, presetSel_ = 0;
   int addSrc_ = 0;           // 0 all, 1 built-in + bundled types, 2 user types, 3 LV2
   bool addFocusList_ = false;
   unsigned catalogVersion_ = 0;
