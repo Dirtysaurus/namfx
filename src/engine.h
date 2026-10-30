@@ -114,6 +114,12 @@ class Engine {
   // metering
   std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0}, rawL_{0}, rawR_{0};
   std::atomic<bool> muted_{false};
+
+  // metronome (settings, not part of a preset); the phase state belongs to the audio thread
+  std::atomic<bool> metOn_{false};
+  std::atomic<float> metBpm_{100.0f}, metVol_{-12.0f};
+  double metPhase_ = 0.0;
+  int metBeat_ = 3, clickPos_ = 1 << 30;
   std::atomic<unsigned> xruns_{0};
   std::atomic<unsigned> version_{1};
 };

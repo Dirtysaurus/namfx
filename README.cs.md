@@ -255,7 +255,7 @@ Příkazy `{"cmd": …}`:
 - **presety a scény:** `preset_load/save/new/rename`, `scene_store/select/remove`
 - **nastavení a vstup:** `set_global {key,value}`, `tuner {on}`, `input {source:live|wav,file,loop,play}`, `transport {play,rewind}`, `set_lang {lang}`, `set_ui {theme,view}`
 - **síť:** `net_set {mode:auto|always|off, ssid, password}`, `net_hotspot {on}`; `state.network` (stav) a `state.hotspot_cfg`
-- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
+- **audio:** `audio_set {device:auto|internal|card:ID, channel:auto|left|right|sum}`, `audio_scan`; `state.audio_dev` (karty, aktivní vstup, volba, manual); `metronome {on?, bpm 30-300, volume dB}` (klik přimíchaný za efekty, `state.metronome`; web: System → Metronom s tap tempem), `undo` / `redo` (strukturální úpravy: přidání, odebrání, posun, bypass, výměna souboru; posledních 30; `state.can_undo`/`can_redo`), `mute {on?}` nouzové ztlumení (výstup se plynule ztlumí, bez `on` přepíná), `state.muted`; `status` má také `in_l_db` / `in_r_db` (surové špičky vstupu po kanálech)
 - **katalog efektů:** `fx_rescan`, `catalog_log`, `engines`
 
 Server posílá `state` (při změně) a `status` (10×/s: CPU, úrovně, zátěž bloků `loads`, ladička). Při změně katalogu se změní `state.catalog_version`.

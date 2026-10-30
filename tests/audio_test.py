@@ -155,6 +155,11 @@ def main():
         check(r.cmd(cmd="add_block", type="volume")["ok"] and chain_len() == 1, "block added")
         check(r.cmd(cmd="undo")["ok"] and chain_len() == 0, "undo removes the added block")
         check(r.cmd(cmd="redo")["ok"] and chain_len() == 1, "redo puts it back")
+        check(r.cmd(cmd="metronome", on=True, bpm=999, volume=-20)["ok"], "metronome accepted")
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            me = json.load(resp)["metronome"]
+        check(me["on"] is True and me["bpm"] == 300 and me["volume"] == -20, "metronome state, bpm clamped to 300")
+        r.cmd(cmd="metronome", on=False)
         r.cmd(cmd="mute")  # toggle back
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
             check(json.load(resp)["muted"] is False, "mute toggles back")

@@ -690,6 +690,12 @@ function renderSys() {
   $('#langSel').replaceChildren(...(st.langs || []).map((l) => el('option', { value: l.code, selected: l.code === st.lang }, l.name)));
   renderNet();
   renderAudio();
+  const me = st.metronome || { on: false, bpm: 100, volume: -12 };
+  if (document.activeElement !== $('#metBpm')) $('#metBpm').value = Math.round(me.bpm);
+  $('#metVol').value = me.volume;
+  $('#metVolV').textContent = me.volume + ' dB';
+  $('#metOn').textContent = me.on ? t('sys.metro_stop', 'Stop') : t('sys.metro_start', 'Start');
+  $('#metOn').classList.toggle('on', me.on);
   const ui = st.ui || {};
   $('#themeSel').replaceChildren(...THEMES.map(([k, en]) => el('option', { value: k, selected: k === (ui.theme || 'dark') }, t('theme.' + k, en))));
   [...$('#viewSeg').children].forEach((b) => b.classList.toggle('on', b.dataset.view === S.view));
@@ -780,6 +786,17 @@ function initSys() {
   [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });
+  $('#metBpm').onchange = (e) => send({ cmd: 'metronome', bpm: +e.target.value });
+  $('#metVol').oninput = (e) => send({ cmd: 'metronome', volume: +e.target.value });
+  $('#metOn').onclick = () => send({ cmd: 'metronome', on: !(S.state.metronome && S.state.metronome.on) });
+  const taps = [];
+  $('#metTap').onclick = () => {  // tap tempo: average of the last intervals, restarts after 2 s of silence
+    const now = performance.now();
+    if (taps.length && now - taps[taps.length - 1] > 2000) taps.length = 0;
+    taps.push(now);
+    if (taps.length > 6) taps.shift();
+    if (taps.length >= 2) send({ cmd: 'metronome', bpm: Math.round(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1))) });
+  };
   $('#undoBtn').onclick = () => send({ cmd: 'undo' });
   $('#redoBtn').onclick = () => send({ cmd: 'redo' });
   [...$('#netMode').children].forEach((b) => (b.onclick = () => send({ cmd: 'net_set', mode: b.dataset.mode })));

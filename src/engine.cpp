@@ -144,6 +144,30 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
     outL[i] = clampf(l, -1.0f, 1.0f);
     outR[i] = clampf(r, -1.0f, 1.0f);
   }
+  if (metOn_.load(std::memory_order_relaxed) && !muted_.load(std::memory_order_relaxed)) {  // metronome click, mixed after the effects
+    const double spb = cfg_.sampleRate * 60.0 / metBpm_.load(std::memory_order_relaxed);  // samples per beat
+    const float vol = dbToLin(metVol_.load(std::memory_order_relaxed));
+    const int clickLen = (int)(cfg_.sampleRate * 0.03);
+    for (int i = 0; i < n; ++i) {
+      if (metPhase_ <= 0.0) {
+        metPhase_ += spb;
+        metBeat_ = (metBeat_ + 1) % 4;
+        clickPos_ = 0;
+      }
+      metPhase_ -= 1.0;
+      if (clickPos_ < clickLen) {
+        const float f = metBeat_ == 0 ? 1600.0f : 1000.0f;
+        const float env = 1.0f - (float)clickPos_ / clickLen;
+        const float s = fastSin2pi(f * clickPos_ / cfg_.sampleRate) * env * env * vol;
+        outL[i] = clampf(outL[i] + s, -1.0f, 1.0f);
+        outR[i] = clampf(outR[i] + s, -1.0f, 1.0f);
+        ++clickPos_;
+      }
+    }
+  } else {
+    metPhase_ = 0.0;
+    metBeat_ = 3;
+  }
   peakOut_.store(std::max(pout, peakOut_.load(std::memory_order_relaxed) * 0.94f), std::memory_order_relaxed);
 }
 
@@ -326,6 +350,7 @@ json Engine::state() {
           {"network", extState_ ? extState_() : json::object()},
           {"audio_dev", audioState_ ? audioState_() : json::object()},
           {"muted", muted_.load()},
+          {"metronome", {{"on", metOn_.load()}, {"bpm", metBpm_.load()}, {"volume", metVol_.load()}}},
           {"can_undo", !undo_.empty()},
           {"can_redo", !redo_.empty()},
           {"lv2", lv2Available()},
@@ -760,6 +785,13 @@ json Engine::handleLocked(const json& c) {
   }
   if (cmd == "mute") {  // panic mute: the output fades to silence (outSm_), "on" omitted = toggle
     muted_.store(c.contains("on") ? c.value("on", true) : !muted_.load());
+    changed();
+    return ok();
+  }
+  if (cmd == "metronome") {  // {on?, bpm 30..300, volume dB -40..0}
+    if (c.contains("bpm")) metBpm_.store(clampf(c.value("bpm", 100.0f), 30.0f, 300.0f));
+    if (c.contains("volume")) metVol_.store(clampf(c.value("volume", -12.0f), -40.0f, 0.0f));
+    if (c.contains("on")) metOn_.store(c.value("on", false));
     changed();
     return ok();
   }
