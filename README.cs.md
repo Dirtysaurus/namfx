@@ -14,7 +14,7 @@ Kytarový multiefekt s Neural Amp Modelerem pro R36S (RK3326, dArkOS).
   - volitelně **hostitel LV2 pluginů**
   - viz [Efekty](#efekty)
 - Bez kytary a bez vstupního hardwaru: vstup z **WAV souboru** (DI nahrávka) ve smyčce, nebo **offline render** WAV → WAV.
-- Jazyky UI: angličtina (výchozí) a čeština. Další jdou přidat přes `web/lang/*.json` (viz [Jazyky](#jazyky)).
+- Jazyky UI: angličtina (výchozí), čeština a slovenština. Další jdou přidat přes `web/lang/*.json` (viz [Jazyky](#jazyky)).
 
 ## Efekty
 
@@ -223,7 +223,7 @@ Volba se ukládá do `data/settings.json`.
 
 ## Jazyky
 
-Výchozí jazyk aplikace je angličtina, k dispozici je i čeština. Jazyk se přepíná ve web UI (Systém → Jazyk) nebo na konzoli (Start → Jazyk). Volba se uloží do `data/settings.json` a platí pro web i displej.
+Výchozí jazyk aplikace je angličtina, k dispozici je i čeština a slovenština (soubor `sk.json` vzniká z češtiny skriptem `tools/make_sk.py`). Jazyk se přepíná ve web UI (Systém → Jazyk) nebo na konzoli (Start → Jazyk). Volba se uloží do `data/settings.json` a platí pro web i displej.
 
 Překlady leží v `web/lang/<kód>.json` a jsou společné pro web UI i UI na displeji.
 

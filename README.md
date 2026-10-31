@@ -14,7 +14,7 @@ A guitar multi-effect built around Neural Amp Modeler for the R36S handheld (RK3
   - optional **LV2 plugin host**
   - see [Effects](#effects)
 - No guitar or input hardware needed: loop a **WAV file** (DI recording) as the input, or **render offline** WAV → WAV.
-- UI languages: English (default) and Czech. More can be added via `web/lang/*.json` (see [Languages](#languages)).
+- UI languages: English (default), Czech and Slovak. More can be added via `web/lang/*.json` (see [Languages](#languages)).
 
 ## Effects
 
@@ -226,6 +226,8 @@ microphone input, not a guitar input; use a USB interface for the guitar. The ch
 English is the source language. Every string in the code carries its English text and a key, and translations live in `web/lang/<code>.json`. The web UI and the on-screen UI share these files.
 
 You can switch the language in the web UI (System → Language) or on the console (Start → Language). The choice is stored in `data/settings.json`.
+
+The Slovak file is generated from the Czech one plus a list of overrides (`tools/make_sk.py`); edit that script, not `sk.json`, and run it again after changing `cs.json`.
 
 To add a language:
 1. Copy `web/lang/en.json` to e.g. `web/lang/de.json`.
