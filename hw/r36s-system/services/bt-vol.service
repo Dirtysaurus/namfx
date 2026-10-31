@@ -1,0 +1,10 @@
+[Unit]
+Description=Bluetooth Volume & Config Monitor
+After=bluealsa.service
+[Service]
+Type=simple
+ExecStart=/opt/bt_fix/bt_volume_monitor.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
