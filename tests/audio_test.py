@@ -187,7 +187,7 @@ def main():
         wah = r.cmd(cmd="add_block", type="wah")["id"]
         check(r.cmd(cmd="expression", value=0.25)["applied"] is True, "expression drives the wah")
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
-            blk = [b for b in json.load(resp)["chain"] if b["id"] == wah][0]
+            blk = [b for b in json.load(resp)["chain"] if b["type"] == "wah"][0]  # the first wah in the chain is driven
         check(abs(blk["params"]["pos"] - 25.0) < 0.01, "wah position follows the expression value")
         check(r.cmd(cmd="preset_step", dir=1)["ok"], "preset_step loads a preset")
         check(r.cmd(cmd="preset_index", index=0)["ok"], "preset_index loads a preset")
