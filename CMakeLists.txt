@@ -51,6 +51,7 @@ set(SRC
   src/net/http_server.cpp
   src/net/hotspot.cpp
   src/ui/canvas.cpp
+  src/ui/qr/qrcodegen.cpp
   src/ui/screens.cpp
   src/ui/display.cpp
   src/ui/input_evdev.cpp

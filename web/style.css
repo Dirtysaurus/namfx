@@ -229,3 +229,7 @@ select, input[type=number], input[type=text] { height: 36px; border-radius: 6px;
 .stmeter .track { display: block; height: 18px; }
 .stmeter .track span { height: 18px; }
 .stcpu { color: var(--dim); font-size: 16px; }
+
+.qrs { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0; }
+.qrs div { width: 150px; text-align: center; font-size: 12px; color: var(--dim); }
+.qrs svg { width: 150px; height: 150px; background: #fff; border-radius: 6px; display: block; margin-bottom: 4px; }

@@ -22,7 +22,7 @@ class Screens {
   void render(Canvas& c);
   void setNetInfo(const std::string& s) { net_ = s; }
   // for snapshots
-  enum class Mode { Rig, Edit, Add, Files, Tuner, Menu, Presets };
+  enum class Mode { Rig, Edit, Add, Files, Tuner, Menu, Presets, Qr };
   void forceMode(Mode m) { mode_ = m; dirty_ = true; }
   void selectId(const std::string& id);
 
@@ -50,6 +50,7 @@ class Screens {
   struct MenuEntry { std::string label; int id; };  // id: action, 99 = back, 100+n = open page n
   std::vector<MenuEntry> menuEntries();
   void drawMenu(Canvas& c);
+  void drawQr(Canvas& c);
   std::string audioLabel() const;
   void cycleAudio();
   void drawPresets(Canvas& c);

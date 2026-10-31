@@ -13,6 +13,8 @@ release and commercial licensing.
 | [DejaVu fonts](https://dejavu-fonts.github.io) | on-screen UI fonts | Bitstream Vera / DejaVu license | `fonts/` (see `fonts/LICENSE-DejaVu.txt`) |
 | [lilv](https://drobilla.net/software/lilv) (+ serd, sord, sratom, zix) | LV2 plugin host | ISC | system library (`liblilv-dev`), linked dynamically, optional |
 | [LV2 headers](https://lv2plug.in) | LV2 plugin API | ISC | system package (`lv2-dev`) |
+| [QR Code generator library](https://www.nayuki.io/page/qr-code-generator-library) (Nayuki) | QR codes on the console screen | MIT | `src/ui/qr/` |
+| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (Kazuhiko Arase) | QR codes in the web UI | MIT | `web/qrcode.min.js` |
 | ALSA (`libasound`) | audio I/O | LGPL-2.1 | system library, linked dynamically |
 | SDL2 | display output | zlib | system library, linked dynamically |
 

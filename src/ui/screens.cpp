@@ -3,6 +3,7 @@
 #include "ui/screens.h"
 #include <algorithm>
 #include <cmath>
+#include "ui/qr/qrcodegen.hpp"
 #include <cstdio>
 #include <fstream>
 #include "i18n.h"
@@ -447,6 +448,9 @@ void Screens::press(Btn btn, bool repeat) {
       else if (btn == Btn::A) { cmd({{"cmd", "preset_load"}, {"file", pl[presetSel_]}}); mode_ = Mode::Rig; }
       break;
     }
+    case Mode::Qr:
+      if (btn == Btn::B || btn == Btn::A || btn == Btn::Start) mode_ = Mode::Menu;
+      break;
     case Mode::Menu: {
       const auto entries = menuEntries();
       const int n = (int)entries.size();
@@ -508,6 +512,7 @@ void Screens::press(Btn btn, bool repeat) {
           }
           case 13: cmd({{"cmd", "mute"}}); mode_ = Mode::Rig; break;
           case 14: quit_ = true; break;
+          case 16: mode_ = Mode::Qr; break;
           case 15: cmd({{"cmd", "metronome"}, {"on", !state_.value("metronome", json::object()).value("on", false)}}); break;
         }
       }
@@ -529,6 +534,7 @@ void Screens::render(Canvas& c) {
     case Mode::Tuner: drawTuner(c); break;
     case Mode::Menu: drawMenu(c); break;
     case Mode::Presets: drawPresets(c); break;
+    case Mode::Qr: drawQr(c); break;
   }
   if (toastTicks_ > 0 && !toast_.empty()) {
     const float w = c.measure(toast_, bold_, 14) + 32;
@@ -1065,6 +1071,7 @@ std::vector<Screens::MenuEntry> Screens::menuEntries() {
               {T("menu.theme", "Theme") + ": " + T("theme." + theme, theme), 9},
               {T("menu.view", "Rig view") + ": " + (pedals_ ? T("view.pedals", "Pedalboard") : T("view.tiles", "Tiles")), 10},
               {T("menu.hotspot", "Own WiFi") + ": " + T("net." + hotspot, hotspot), 12},
+              {T("menu.qr", "Phone QR codes"), 16},
               {back, 99}};
     default:
       return {{T("menu.sub_preset", "Preset") + "  >", 101},
@@ -1088,6 +1095,56 @@ void Screens::drawMenu(Canvas& c) {
     const bool sel = (int)i == menuSel_;
     if (sel) c.roundRect(162, y, 316, 28, 6, mix(col::panel, rgb(0xFFB300), 0.3f));
     c.text(176, y + 19, c.ellipsize(items[i].label, sans_, 14, 290), sans_, 14, items[i].id == 14 ? col::err : col::text);
+  }
+}
+
+// Draws a QR code of `text` into a square of about `size` px (white quiet zone included).
+static void drawQrCode(Canvas& c, const std::string& text, float x, float y, float size) {
+  using qrcodegen::QrCode;
+  const QrCode qr = QrCode::encodeText(text.c_str(), QrCode::Ecc::MEDIUM);
+  const int n = qr.getSize(), cells = n + 4;
+  const float m = std::floor(size / cells);
+  c.rect(x, y, m * cells, m * cells, rgb(0xFFFFFF));
+  for (int j = 0; j < n; ++j)
+    for (int i = 0; i < n; ++i)
+      if (qr.getModule(i, j)) c.rect(x + (i + 2) * m, y + (j + 2) * m, m, m, rgb(0x000000));
+}
+
+// WIFI:T:WPA;S:name;P:password;; (special characters escaped), as phone cameras expect it
+static std::string wifiQrText(const std::string& ssid, const std::string& pw) {
+  auto esc = [](const std::string& s) {
+    std::string o;
+    for (char ch : s) { if (std::string("\;,:\"").find(ch) != std::string::npos) o += '\'; o += ch; }
+    return o;
+  };
+  return pw.empty() ? "WIFI:T:nopass;S:" + esc(ssid) + ";;" : "WIFI:T:WPA;S:" + esc(ssid) + ";P:" + esc(pw) + ";;";
+}
+
+void Screens::drawQr(Canvas& c) {
+  const json net = state_.value("network", json::object());
+  const bool ap = net.value("hotspot", false);
+  const json apj = net.value("ap", json::object());
+  std::string ip = net.value("ip", "");
+  if (ip.empty() && ap) ip = "10.42.0.1";
+  const int port = net.value("web_port", 80);
+  const std::string url = ip.empty() ? "" : "http://" + ip + (port != 80 ? ":" + std::to_string(port) : "");
+  c.text(14, 70, T("qr.title", "Connect your phone"), bold_, 16, col::text);
+  if (ap) {
+    const std::string ssid = apj.value("ssid", "namfx"), pw = apj.value("password", "");
+    drawQrCode(c, wifiQrText(ssid, pw), 50, 100, 230);
+    c.text(165, 350, T("qr.join", "1. Scan to join the WiFi"), sans_, 14, col::text, Align::Center);
+    c.text(165, 372, ssid + (pw.empty() ? " (" + T("qr.open", "open") + ")" : ""), mono_, 12, col::dim, Align::Center);
+    if (!url.empty()) {
+      drawQrCode(c, url, 360, 100, 230);
+      c.text(475, 350, T("qr.open_page", "2. Then scan to open namfx"), sans_, 14, col::text, Align::Center);
+      c.text(475, 372, url, mono_, 12, col::dim, Align::Center);
+    }
+  } else if (!url.empty()) {
+    drawQrCode(c, url, 205, 100, 230);
+    c.text(320, 350, T("qr.open_page2", "Scan to open namfx (same WiFi)"), sans_, 14, col::text, Align::Center);
+    c.text(320, 372, url, mono_, 12, col::dim, Align::Center);
+  } else {
+    c.text(320, 240, T("qr.none", "No network: turn on WiFi or the own WiFi (hotspot)"), sans_, 14, col::text, Align::Center);
   }
 }
 
