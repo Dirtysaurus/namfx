@@ -133,11 +133,7 @@ def main():
         a = r.wait(lambda a: a["choice"]["output"] == "bluetooth", "bluetooth chosen")
         check(a["active"]["playback"] == a["active"]["capture"] and not a["active"]["bt_route"],
               "no Bluetooth route (no Loopback in asound.conf): playing on the card")
-        (tmp / "asound.conf").write_text("pcm.!default {
- type plug
- slave.pcm \"hw:Loopback,0,0\"
-}
-")  # what the bt-vol service writes
+        (tmp / "asound.conf").write_text('pcm.!default { type plug slave.pcm "hw:Loopback,0,0" }')  # what the bt-vol service writes
         a = r.wait(lambda a: a["active"]["playback"] == "default" and a["active"]["bt_route"], "headphones connected -> default", timeout=10)
         check(a["active"]["capture"].startswith("plughw:"), "input stays on the card")
         (tmp / "asound.conf").unlink()
