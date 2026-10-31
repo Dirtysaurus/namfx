@@ -43,7 +43,7 @@ class Run:
         self.data = tmp / "data"
         if not self.data.exists():
             shutil.copytree(ROOT / "data", self.data)
-        env = dict(os.environ, NAMFX_ASOUND_ROOT=str(tmp / "asound"))
+        env = dict(os.environ, NAMFX_ASOUND_ROOT=str(tmp / "asound"), NAMFX_ASOUND_CONF=str(tmp / "asound.conf"))
         self.p = subprocess.Popen([str(EXE), "--null-audio", "--no-display", "--no-lv2", "--no-hotspot", "--data", str(self.data),
                                    "--port", str(self.port), *extra], cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT, text=True)
@@ -128,9 +128,22 @@ def main():
         r.cmd(cmd="audio_set", channel="auto", device="card:Twin")
         r.wait(lambda a: a["active"]["device"] == "card:Twin" and a["active"]["channel"] == 0, "back to the USB card with auto channel")
 
-        check(r.cmd(cmd="audio_set", output="pcm:bluealsa")["ok"], "output pcm:bluealsa accepted")
-        a = r.wait(lambda a: a["active"]["playback"] == "bluealsa", "custom output")
-        check(a["active"]["capture"].startswith("plughw:") and a["choice"]["output"] == "pcm:bluealsa", "input stays on the card, output follows the choice")
+        (tmp / "asound.conf").unlink(missing_ok=True)
+        check(r.cmd(cmd="audio_set", output="bluetooth")["ok"], "output bluetooth accepted")
+        a = r.wait(lambda a: a["choice"]["output"] == "bluetooth", "bluetooth chosen")
+        check(a["active"]["playback"] == a["active"]["capture"] and not a["active"]["bt_route"],
+              "no Bluetooth route (no Loopback in asound.conf): playing on the card")
+        (tmp / "asound.conf").write_text("pcm.!default {
+ type plug
+ slave.pcm \"hw:Loopback,0,0\"
+}
+")  # what the bt-vol service writes
+        a = r.wait(lambda a: a["active"]["playback"] == "default" and a["active"]["bt_route"], "headphones connected -> default", timeout=10)
+        check(a["active"]["capture"].startswith("plughw:"), "input stays on the card")
+        (tmp / "asound.conf").unlink()
+        r.wait(lambda a: a["active"]["playback"] == a["active"]["capture"] and not a["active"]["bt_route"], "headphones gone -> back to the card", timeout=10)
+        check(r.cmd(cmd="audio_set", output="pcm:plughw:CARD=Loopback,DEV=0")["ok"], "explicit pcm accepted")
+        a = r.wait(lambda a: a["active"]["playback"] == "plughw:CARD=Loopback,DEV=0", "custom output")
         m = r.cmd(cmd="audio_set", output="pcm:x;rm")
         check(not m["ok"] and m["code"] == "err.audio_output", "bad output name is refused")
         r.cmd(cmd="audio_set", output="same")

@@ -307,6 +307,7 @@ int main(int argc, char** argv) {
                 {"capture", captureGiven ? ao.capture : audioActive.capture}, {"playback", playbackGiven ? ao.playback : audioActive.playback},
                 {"description", audioDesc}};
     if (!audioActive.missing.empty()) act["missing"] = audioActive.missing;
+    act["bt_route"] = audioActive.btRoute;
     json st = {{"cards", cards}, {"active", act},
                {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}}},
                {"manual", captureGiven || playbackGiven || inChannelGiven}};
@@ -415,6 +416,7 @@ int main(int argc, char** argv) {
   auto lastState = lastStatus;
   auto lastNet = lastStatus;
   int tick = 0;
+  auto lastBt = std::chrono::steady_clock::now();
   auto onBtn = [&](ui::Btn b, bool rep) {
     screens.setButtonsHeld(pad.selectHeld(), pad.startHeld());
     screens.press(b, rep);
@@ -423,6 +425,12 @@ int main(int argc, char** argv) {
     const auto now = std::chrono::steady_clock::now();
     if (++tick % 2 == 0) eng.controlTick();
     if (now - lastNet > std::chrono::seconds(2)) { lastNet = now; screens.setNetInfo(netInfo()); }
+    if (now - lastBt > std::chrono::seconds(2)) {  // Bluetooth headphones (dis)connected: move the output
+      lastBt = now;
+      bool used;
+      { std::lock_guard<std::mutex> lk(audioMtx); used = audioActive.btRoute; }
+      if (audioChoice().output == "bluetooth" && fx::bluetoothRouteActive() != used) audioApply = true;
+    }
     if (audio.lost()) {  // USB interface unplugged while running: re-resolve (the missing card falls back to the internal one)
       std::fprintf(stderr, "[audio] sound card lost - re-resolving\n");
       audioApply = true;

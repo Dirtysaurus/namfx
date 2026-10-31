@@ -22,7 +22,7 @@ struct AudioCard {
 struct AudioChoice {
   std::string device = "auto";   // auto | internal | card:<id>
   std::string channel = "auto";  // auto | left | right | sum
-  std::string output = "same";   // same (as the input card) | pcm:<ALSA name>, e.g. pcm:bluealsa, pcm:pulse
+  std::string output = "same";   // same (as the input card) | bluetooth | pcm:<ALSA name>
 };
 
 struct AudioResolved {
@@ -32,11 +32,15 @@ struct AudioResolved {
   std::string cardId;
   std::string output;               // custom playback device ("" = the input card)
   std::string missing;              // the chosen card isn't there (unplugged): we fell back
+  bool btRoute = false;             // output=bluetooth and the system routes "default" to Bluetooth right now
   bool usb = false, found = false;  // found = a card was picked from the list
   int channel = 1;                  // 0 left, 1 right, 2 sum
 };
 
 std::vector<AudioCard> scanAudioCards();
+// The R36S Bluetooth setup (bt-vol service, bluealsa + alsaloop) writes /etc/asound.conf with "default" -> hw:Loopback,0,0
+// while Bluetooth headphones are connected; alsaloop forwards that to the headphones. $NAMFX_ASOUND_CONF overrides the path (tests).
+bool bluetoothRouteActive();
 // auto = first USB interface with input and output, otherwise the internal codec.
 // Input and output always come from the same card: two cards would have separate clocks and drift.
 // auto channel: the internal jack only carries signal on the right channel, USB interfaces use the left.

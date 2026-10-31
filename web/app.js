@@ -729,6 +729,7 @@ function renderAudio() {
   const cards = (au.cards || []).filter((c) => c.capture && c.playback && c.name !== 'Loopback');
   const rows = [[t('sys.aud_active', 'In use'), act.label || act.capture || '-'], [t('sys.aud_channel', 'Input channel'), [t('aud.left', 'Left'), t('aud.right', 'Right'), t('aud.sum', 'Sum')][act.channel] || '-']];
   if (act.missing) rows.push([t('sys.net_err', 'Error'), t('sys.aud_missing', 'card "{0}" is not connected', [act.missing])]);
+  if (ch.output === 'bluetooth') rows.push([t('sys.aud_output', 'Output'), act.bt_route ? t('sys.aud_bt_on', 'Bluetooth route is active') : t('sys.aud_bt_off', 'Bluetooth headphones are not connected, playing on the card')]);
   if (au.error) rows.push([t('sys.net_err', 'Error'), au.error]);
   if (au.manual) rows.push([t('sys.aud_manual', 'Note'), t('sys.aud_manual_val', 'started with --capture / --playback / --in-channel: the choice below is ignored')]);
   $('#audInfo').replaceChildren(...rows.flatMap(([k, v]) => [el('span', {}, k), el('b', {}, String(v))]));

@@ -61,6 +61,15 @@ std::vector<AudioCard> scanAudioCards() {
   return out;
 }
 
+bool bluetoothRouteActive() {
+  const char* env = std::getenv("NAMFX_ASOUND_CONF");
+  std::ifstream f(env && *env ? env : "/etc/asound.conf");
+  std::string line;
+  while (std::getline(f, line))
+    if (line.find("Loopback") != std::string::npos) return true;
+  return false;
+}
+
 AudioResolved resolveAudio(const std::vector<AudioCard>& cards, const AudioChoice& choice) {
   auto duplex = [](const AudioCard& c) { return c.capture && c.playback; };
   auto internal = [&](const AudioCard& c) { return !c.usb && c.driver != "Loopback" && duplex(c); };
@@ -93,7 +102,10 @@ AudioResolved resolveAudio(const std::vector<AudioCard>& cards, const AudioChoic
     // plughw converts the sample format (USB interfaces are often 24-bit packed)
     r.capture = r.playback = pick->usb ? "plughw:CARD=" + pick->id + ",DEV=0" : "hw:" + std::to_string(pick->index) + ",0";
   }
-  if (choice.output.rfind("pcm:", 0) == 0 && choice.output.size() > 4) {  // e.g. Bluetooth headphones through bluealsa / pulse
+  if (choice.output == "bluetooth" && bluetoothRouteActive()) {  // headphones connected: the system "default" goes to alsaloop -> bluealsa
+    r.playback = r.output = "default";
+    r.btRoute = true;
+  } else if (choice.output.rfind("pcm:", 0) == 0 && choice.output.size() > 4) {  // any other ALSA device
     r.playback = choice.output.substr(4);
     r.output = r.playback;
   }

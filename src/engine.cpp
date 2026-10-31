@@ -632,7 +632,7 @@ json Engine::handleLocked(const json& c) {
     }
     if (c.contains("output")) {  // playback to another ALSA device (Bluetooth): "same" or "pcm:<name>"
       const std::string o = c["output"].is_string() ? c["output"].get<std::string>() : "";
-      bool good = o == "same";
+      bool good = o == "same" || o == "bluetooth";
       if (!good && o.rfind("pcm:", 0) == 0 && o.size() > 4 && o.size() <= 68) {
         good = true;
         for (size_t i = 4; i < o.size(); ++i)
