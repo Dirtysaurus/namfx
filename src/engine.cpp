@@ -396,6 +396,7 @@ json Engine::state() {
           {"metronome", {{"on", metOn_.load()}, {"bpm", metBpm_.load()}, {"volume", metVol_.load()}}},
           {"looper", {{"state", std::vector<std::string>{"empty", "rec", "play", "overdub", "stopped"}[std::clamp(loopStateA_.load(), 0, 4)]},
                       {"seconds", loopSecs_.load()}, {"max_seconds", (float)(loopBuf_.size() / 2) / cfg_.sampleRate}}},
+          {"setlist", settings_.value("setlist", json::array())},
           {"can_undo", !undo_.empty()},
           {"can_redo", !redo_.empty()},
           {"lv2", lv2Available()},
@@ -868,6 +869,19 @@ json Engine::handleLocked(const json& c) {
     const auto it = acts.find(a);
     if (it == acts.end()) return fail("err.unknown_key");
     loopReq_.store(it->second);
+    changed();
+    return ok();
+  }
+  if (cmd == "setlist_set") {  // {files:[preset file names]}: the order L1/R1 and the web arrows walk through (empty = all presets)
+    json list = json::array();
+    if (c.contains("files") && c["files"].is_array()) {
+      for (auto& f : c["files"]) {
+        if (!f.is_string() || !safeName(f.get<std::string>())) return fail("err.invalid_name");
+        list.push_back(f);
+      }
+    }
+    settings_["setlist"] = list;
+    saveSettings();
     changed();
     return ok();
   }

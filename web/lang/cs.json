@@ -629,6 +629,7 @@
   "sys.aud_channel": "Vstupní kanál",
   "sys.aud_scan": "Vyhledat zvukové karty",
   "sys.aud_signal": "Signál na vstupu",
+  "ui.setlist_toggle": "v setlistu",
   "sys.qr_join": "1. Připojte se k WiFi",
   "sys.qr_open": "2. Otevřete namfx",
   "menu.qr": "QR kódy pro telefon",

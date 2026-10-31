@@ -181,6 +181,11 @@ def main():
             me = json.load(resp)["metronome"]
         check(me["on"] is True and me["bpm"] == 300 and me["volume"] == -20, "metronome state, bpm clamped to 300")
         r.cmd(cmd="metronome", on=False)
+        check(r.cmd(cmd="setlist_set", files=["b.json", "a.json"])["ok"], "setlist accepted")
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            check(json.load(resp)["setlist"] == ["b.json", "a.json"], "setlist is kept in the given order")
+        check(not r.cmd(cmd="setlist_set", files=["../x.json"])["ok"], "unsafe setlist entry refused")
+        r.cmd(cmd="setlist_set", files=[])
         check(r.cmd(cmd="gain_wizard", on=True)["ok"], "level wizard started")
         end = time.time() + 15
         res = ""

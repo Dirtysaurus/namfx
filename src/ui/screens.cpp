@@ -330,7 +330,10 @@ void Screens::press(Btn btn, bool repeat) {
       } else if (btn == Btn::Y) {
         if (!cc.split.empty()) { selectId(cc.split); editSel_ = 0; mode_ = Mode::Edit; }
       } else if (btn == Btn::L1 || btn == Btn::R1) {
-        const auto& pl = files["presets"];
+        json pl = json::array();  // the setlist (only presets that still exist), else all presets
+        for (auto& sf : state_.value("setlist", json::array()))
+          for (auto& pf : files["presets"]) if (pf == sf) { pl.push_back(sf); break; }
+        if (pl.empty()) pl = files["presets"];
         if (pl.empty()) { toast(T("ui.no_presets", "No presets")); return; }
         int i = 0;
         const std::string curf = state_["preset"]["file"];

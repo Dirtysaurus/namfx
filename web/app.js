@@ -234,7 +234,7 @@ function renderAll() {
   $('#stScene').textContent = st.scene >= 0 ? t('ui.scene', 'Scene') + ' ' + (st.scene + 1) : '';
   $('#undoBtn').disabled = !st.can_undo;
   $('#redoBtn').disabled = !st.can_redo;
-  const pl = st.files.presets;
+  const pl = activePresets();
   const idx = pl.indexOf(st.preset.file);
   $('#pnum').textContent = 'PRESET ' + (idx >= 0 ? String(idx + 1).padStart(2, '0') : '--') + ' · ' + t('ui.cpu_estimate', 'CPU estimate {0} %', [Math.round(st.cpu_est)]);
   $('#ptitle').textContent = st.preset.name;
@@ -618,6 +618,13 @@ const FILE_KINDS = [['nam', 'files.nam', 'NAM models', '#FFB300', '.nam'], ['ir'
   ['wav', 'files.wav', 'DI recordings (WAV)', '#5CC8FF', '.wav'], ['presets', 'files.presets', 'Presets', '#9B5CFF', '.json'],
   ['fx', 'files.fx', 'Effect types (JSON packs)', '#00E5FF', '.json']];
 
+function activePresets() {  // the setlist (existing presets only), otherwise every preset
+  const all = S.state.files.presets, sl = (S.state.setlist || []).filter((f) => all.includes(f));
+  return sl.length ? sl : all;
+}
+
+function setSetlist(list) { send({ cmd: 'setlist_set', files: list }); }
+
 function renderFiles() {
   const box = $('#files');
   box.replaceChildren();
@@ -628,6 +635,16 @@ function renderFiles() {
     if (!list.length) box.append(el('div', { class: 'info' }, t('ui.empty', 'empty')));
     for (const f of list) {
       const item = el('div', { class: 'fitem' }, el('span', {}, f));
+      if (kind === 'presets') {
+        const sl = (S.state.setlist || []).filter((x) => list.includes(x)), pos = sl.indexOf(f);
+        item.prepend(el('button', { class: 'load', title: t('ui.setlist_toggle', 'in setlist'), 'aria-label': t('ui.setlist_toggle', 'in setlist'),
+          onclick: () => setSetlist(pos >= 0 ? sl.filter((x) => x !== f) : [...sl, f]) }, pos >= 0 ? '★ ' + (pos + 1) : '☆'));
+        if (pos >= 0) {
+          const mv = (d) => { const n = [...sl]; [n[pos], n[pos + d]] = [n[pos + d], n[pos]]; setSetlist(n); };
+          if (pos > 0) item.append(el('button', { onclick: () => mv(-1) }, '↑'));
+          if (pos < sl.length - 1) item.append(el('button', { onclick: () => mv(1) }, '↓'));
+        }
+      }
       if (kind === 'presets') item.append(el('button', { class: 'load', onclick: () => send({ cmd: 'preset_load', file: f }, (r) => r.ok && toast(t('ui.loaded_x', 'Loaded: {0}', [f]), true)) }, t('ui.load', 'load')));
       if (kind === 'wav') item.append(el('button', { class: 'load', onclick: () => send({ cmd: 'input', source: 'wav', file: f, play: true, loop: true }) }, t('ui.use_as_input', 'use as input')));
       item.append(el('button', { onclick: () => del(kind, f) }, t('ui.delete_lc', 'delete')));
@@ -862,7 +879,7 @@ async function keepAwake(on) {  // the stage view keeps the phone screen on
 
 function initTop() {
   const step = (d) => {
-    const pl = S.state.files.presets;
+    const pl = activePresets();
     if (!pl.length) return;
     let i = pl.indexOf(S.state.preset.file);
     i = (i + d + pl.length) % pl.length;
