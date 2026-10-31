@@ -180,6 +180,10 @@ def main():
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
             me = json.load(resp)["metronome"]
         check(me["on"] is True and me["bpm"] == 300 and me["volume"] == -20, "metronome state, bpm clamped to 300")
+        for typ, prm in (("wah", "pos"), ("octaver", "sub2")):
+            m = r.cmd(cmd="add_block", type=typ)
+            check(m["ok"], f"{typ} block can be added")
+            check(r.cmd(cmd="set_param", id=m["id"], param=prm, value=50)["ok"], f"{typ}.{prm} can be set")
         r.cmd(cmd="metronome", on=False)
         check(r.cmd(cmd="setlist_set", files=["b.json", "a.json"])["ok"], "setlist accepted")
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:

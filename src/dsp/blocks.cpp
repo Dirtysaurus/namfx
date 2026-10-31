@@ -45,6 +45,14 @@ std::vector<BlockDef> builtinDefs() {
     D("tremolo", "Tremolo", "TRM", "mod", "Volume modulation", "", 0.6f,
       {P("rate", "Rate", 0.5f, 15, 5, "Hz", PKind::Float, {}, true), P("depth", "Depth", 0, 100, 50, "%"),
        P("shape", "Shape", 0, 2, 0, "", PKind::Enum, {"Sine", "Triangle", "Square"})}),
+    D("wah", "Wah", "WAH", "mod", "Wah pedal (manual position, or an auto-wah that follows your picking)", "", 1.2f,
+      {P("mode", "Mode", 0, 1, 0, "", PKind::Enum, {"Pedal", "Auto"}), P("pos", "Pedal position", 0, 100, 50, "%"),
+       P("lo", "Heel frequency", 200, 800, 380, "Hz", PKind::Float, {}, true), P("hi", "Toe frequency", 1000, 4000, 2200, "Hz", PKind::Float, {}, true),
+       P("q", "Resonance", 2, 12, 6, ""), P("sens", "Auto sensitivity", 0, 100, 50, "%"),
+       P("release", "Auto release", 20, 500, 120, "ms", PKind::Float, {}, true), P("level", "Level", -12, 12, 0, "dB")}),
+    D("octaver", "Octaver", "OCT", "mod", "Analog-style octave down (single notes work best)", "", 1.0f,
+      {P("sub1", "-1 octave", 0, 100, 70, "%"), P("sub2", "-2 octaves", 0, 100, 0, "%"), P("dry", "Dry", 0, 100, 100, "%"),
+       P("tone", "Sub tone", 100, 3000, 800, "Hz", PKind::Float, {}, true), P("level", "Level", -12, 12, 0, "dB")}),
     D("volume", "Volume", "VOL", "util", "Volume / expression", "", 0.4f,
       {P("level", "Level", -60, 12, 0, "dB")}),
     // Splits the signal into two paths; not added like a regular block.
@@ -309,6 +317,91 @@ class TremoloBlock : public Block {
   float sq_ = 0;
 };
 
+// Wah: band-pass state variable filter (TPT) swept between the heel and toe frequency.
+// The position comes from the "pos" parameter (an expression pedal or stick can drive it) or, in Auto mode, from the picking envelope.
+class WahBlock : public Block {
+ public:
+  using Block::Block;
+  void prepare(float sr, int mb) override {
+    Block::prepare(sr, mb);
+    posSm_.setup(sr, 15.0f);
+    posSm_.reset(get(1) * 0.01f);
+    ic1_[0] = ic1_[1] = ic2_[0] = ic2_[1] = 0;
+  }
+  void process(float* L, float* R, int n, bool st) override {
+    const bool autoMode = get(0) > 0.5f;
+    const float lo = get(2), hi = std::max(get(3), lo * 1.5f), q = get(4), k = 1.0f / q;
+    const float sens = get(5) * 0.1f, level = dbToLin(get(7));
+    env_.setup(sr_, 4.0f, get(6));
+    const float manual = get(1) * 0.01f;
+    float g = 0, a1 = 1, a2 = 0, a3 = 0;
+    for (int i = 0; i < n; ++i) {
+      const float in = st ? 0.5f * (L[i] + R[i]) : L[i];
+      const float target = autoMode ? clampf(env_.tick(in) * sens, 0.0f, 1.0f) : manual;
+      const float pos = posSm_.next(target);
+      if ((i & 7) == 0) {  // coefficients every 8 samples
+        const float fc = lo * std::pow(hi / lo, pos);
+        g = std::tan(kPi * clampf(fc, 20.0f, sr_ * 0.45f) / sr_);
+        a1 = 1.0f / (1.0f + g * (g + k));
+        a2 = g * a1;
+        a3 = g * a2;
+      }
+      for (int c = 0; c < (st ? 2 : 1); ++c) {
+        float* x = c ? R : L;
+        const float v3 = x[i] - ic2_[c];
+        const float v1 = a1 * ic1_[c] + a2 * v3;
+        const float v2 = ic2_[c] + a2 * ic1_[c] + a3 * v3;
+        ic1_[c] = 2.0f * v1 - ic1_[c];
+        ic2_[c] = 2.0f * v2 - ic2_[c];
+        x[i] = v1 * k * 2.0f * level;
+      }
+    }
+  }
+
+ private:
+  Smoother posSm_;
+  Envelope env_;
+  float ic1_[2] = {0, 0}, ic2_[2] = {0, 0};
+};
+
+// Octaver: a flip-flop driven by the zero crossings of the low-passed input gives a square wave one octave down
+// (a second flip-flop two octaves down); its level follows the input envelope and it is low-passed for a rounder tone.
+class OctaverBlock : public Block {
+ public:
+  using Block::Block;
+  void prepare(float sr, int mb) override {
+    Block::prepare(sr, mb);
+    in_.setLP(sr, 1000.0f);
+    env_.setup(sr, 2.0f, 60.0f);
+  }
+  void process(float* L, float* R, int n, bool st) override {
+    const float s1 = get(0) * 0.01f, s2 = get(1) * 0.01f, dry = get(2) * 0.01f, level = dbToLin(get(4));
+    tone_.setLP(sr_, get(3));
+    for (int i = 0; i < n; ++i) {
+      const float x = st ? 0.5f * (L[i] + R[i]) : L[i];
+      const float env = env_.tick(x);
+      const float lp = in_.lp(x);
+      const float h = std::max(0.2f * env, 1e-4f);  // hysteresis follows the level
+      if (!high_ && lp > h) {
+        high_ = true;
+        ff1_ = !ff1_;
+        if (ff1_) ff2_ = !ff2_;
+      } else if (high_ && lp < -h) {
+        high_ = false;
+      }
+      float sub = ((ff1_ ? 1.0f : -1.0f) * s1 + (ff2_ ? 1.0f : -1.0f) * s2) * env * 1.5f;
+      sub = tone_.lp(tone_.lp(sub, 1), 0);
+      L[i] = (L[i] * dry + sub) * level;
+      if (st) R[i] = (R[i] * dry + sub) * level;
+    }
+  }
+
+ private:
+  OnePole in_, tone_;
+  Envelope env_;
+  bool high_ = false, ff1_ = false, ff2_ = false;
+};
+
 class VolumeBlock : public Block {
  public:
   using Block::Block;
@@ -355,6 +448,8 @@ std::unique_ptr<Block> makeBlock(const BlockDef* d) {
   if (type == "ir") return std::make_unique<IrBlock>(d);
   if (type == "eq") return std::make_unique<EqBlock>(d);
   if (type == "tremolo") return std::make_unique<TremoloBlock>(d);
+  if (type == "wah") return std::make_unique<WahBlock>(d);
+  if (type == "octaver") return std::make_unique<OctaverBlock>(d);
   if (type == "volume") return std::make_unique<VolumeBlock>(d);
   if (type == "split") return makeSplitBlock(d);
   return nullptr;
