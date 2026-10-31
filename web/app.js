@@ -719,6 +719,10 @@ function renderSys() {
   $('#langSel').replaceChildren(...(st.langs || []).map((l) => el('option', { value: l.code, selected: l.code === st.lang }, l.name)));
   renderNet();
   renderAudio();
+  const inp = st.input || {};
+  $('#wavSpeed').value = inp.speed || 1;
+  $('#wavSpeedV').textContent = '×' + (inp.speed || 1).toFixed(2);
+  $('#wavAB').textContent = inp.loop_b > inp.loop_a ? `A ${inp.loop_a.toFixed(1)} s · B ${inp.loop_b.toFixed(1)} s` : (inp.loop_a > 0 ? `A ${inp.loop_a.toFixed(1)} s` : '');
   const lp = st.looper || { state: 'empty', seconds: 0, max_seconds: 30 };
   const lpNames = { empty: t('sys.loop_s_empty', 'empty'), rec: t('sys.loop_s_rec', 'recording'), play: t('sys.loop_s_play', 'playing'), overdub: t('sys.loop_s_over', 'overdubbing'), stopped: t('sys.loop_s_stop', 'stopped') };
   $('#loopInfo').replaceChildren(el('div', {}, `${lpNames[lp.state] || lp.state} · ${lp.seconds.toFixed(1)} / ${Math.round(lp.max_seconds)} s`));
@@ -835,6 +839,10 @@ function initSys() {
   for (const [id, action] of [['loopRec', 'rec'], ['loopPlay', 'play'], ['loopOver', 'overdub'], ['loopStop', 'stop'], ['loopClear', 'clear']])
     $('#' + id).onclick = () => send({ cmd: 'looper', action });
   $('#wizBtn').onclick = () => send({ cmd: 'gain_wizard', on: true });
+  $('#wavSpeed').oninput = (e) => send({ cmd: 'transport', speed: +e.target.value });
+  $('#wavA').onclick = () => send({ cmd: 'transport', loop_a: (S.status && S.status.wav_pos) || 0 });
+  $('#wavB').onclick = () => send({ cmd: 'transport', loop_b: (S.status && S.status.wav_pos) || 0 });
+  $('#wavClr').onclick = () => send({ cmd: 'transport', clear_loop: true });
   $('#metBpm').onchange = (e) => send({ cmd: 'metronome', bpm: +e.target.value });
   $('#metVol').oninput = (e) => send({ cmd: 'metronome', volume: +e.target.value });
   $('#metOn').onclick = () => send({ cmd: 'metronome', on: !(S.state.metronome && S.state.metronome.on) });

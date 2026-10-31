@@ -84,6 +84,13 @@
             <label class="chk"><input type="checkbox" id="wavLoop" checked> <span data-i18n="ui.loop">loop</span></label>
           </div>
           <div class="pos"><span id="wavPos"></span></div>
+          <label class="prow"><span data-i18n="sys.wav_speed">Speed</span><input type="range" id="wavSpeed" min="0.5" max="1.5" step="0.05"><output id="wavSpeedV"></output></label>
+          <div class="transport">
+            <button class="pill" id="wavA" data-i18n="sys.wav_a">Set A</button>
+            <button class="pill" id="wavB" data-i18n="sys.wav_b">Set B</button>
+            <button class="pill" id="wavClr" data-i18n="sys.wav_clr">Clear A-B</button>
+            <span id="wavAB" class="info"></span>
+          </div>
         </div>
       </div>
       <div class="card">

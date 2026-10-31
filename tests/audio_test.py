@@ -186,6 +186,11 @@ def main():
             check(json.load(resp)["setlist"] == ["b.json", "a.json"], "setlist is kept in the given order")
         check(not r.cmd(cmd="setlist_set", files=["../x.json"])["ok"], "unsafe setlist entry refused")
         r.cmd(cmd="setlist_set", files=[])
+        check(r.cmd(cmd="transport", speed=9, loop_a=1.0, loop_b=2.5)["ok"], "transport speed / A-B accepted")
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            inp = json.load(resp)["input"]
+        check(inp["speed"] == 1.5, "speed is clamped to 1.5")
+        r.cmd(cmd="transport", speed=1.0, clear_loop=True)
         check(r.cmd(cmd="gain_wizard", on=True)["ok"], "level wizard started")
         end = time.time() + 15
         res = ""

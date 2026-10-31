@@ -110,7 +110,9 @@ class Engine {
   Swap<WavBuf> wav_;
   std::string wavFile_;
   std::atomic<bool> useWav_{false}, playing_{false}, loop_{true};
-  std::atomic<size_t> wavPos_{0}, wavLen_{0};
+  std::atomic<size_t> wavPos_{0}, wavLen_{0}, wavA_{0}, wavB_{0};
+  std::atomic<float> wavSpeed_{1.0f};
+  double wavFrac_ = 0.0;  // audio thread only
 
   // metering
   std::atomic<float> peakIn_{0}, peakOut_{0}, cpu_{0}, rawL_{0}, rawR_{0};

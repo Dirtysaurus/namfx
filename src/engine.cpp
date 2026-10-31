@@ -107,17 +107,32 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
   float* L = L_.data();
   float* R = R_.data();
   if (useWav_.load(std::memory_order_relaxed) && wb && !wb->data.empty()) {
-    size_t pos = wavPos_.load(std::memory_order_relaxed);
+    // playback speed (varispeed, the pitch follows) and an optional A-B loop (B = 0: up to the end)
+    double pos = (double)wavPos_.load(std::memory_order_relaxed) + wavFrac_;
     const size_t len = wb->data.size();
     const bool play = playing_.load(std::memory_order_relaxed);
+    const double speed = wavSpeed_.load(std::memory_order_relaxed);
+    const size_t la = std::min(wavA_.load(std::memory_order_relaxed), len), lbRaw = wavB_.load(std::memory_order_relaxed);
+    const double end = (double)(lbRaw > la && lbRaw <= len ? lbRaw : len);
+    const bool loopOn = loop_.load(std::memory_order_relaxed) || (lbRaw > la);
     for (int i = 0; i < n; ++i) {
-      if (play && pos >= len) {
-        if (loop_.load(std::memory_order_relaxed)) pos = 0;
+      if (play && pos >= end) {
+        if (loopOn) pos = (double)la + (pos - end);
         else { playing_.store(false); }
       }
-      L[i] = (play && pos < len) ? wb->data[pos++] : 0.0f;
+      if (play && pos < (double)len) {
+        const size_t i0 = (size_t)pos;
+        const float fr = (float)(pos - (double)i0);
+        const float s0 = wb->data[i0], s1 = wb->data[std::min(i0 + 1, len - 1)];
+        L[i] = s0 + (s1 - s0) * fr;
+        pos += speed;
+      } else {
+        L[i] = 0.0f;
+      }
     }
-    wavPos_.store(pos, std::memory_order_relaxed);
+    const double fl = std::floor(pos);
+    wavFrac_ = pos - fl;
+    wavPos_.store((size_t)fl, std::memory_order_relaxed);
   } else if (in) {
     std::memcpy(L, in, n * sizeof(float));
   } else {
@@ -383,7 +398,8 @@ json Engine::state() {
           {"scenes", scenes_},
           {"scene", scene_},
           {"globals", {{"input_gain", inGain_.load()}, {"output_gain", outGain_.load()}, {"tuner_mute", tunerMute_.load()}, {"a4", a4_}}},
-          {"input", {{"source", useWav_.load() ? "wav" : "live"}, {"file", wavFile_}, {"loop", loop_.load()}}},
+          {"input", {{"source", useWav_.load() ? "wav" : "live"}, {"file", wavFile_}, {"loop", loop_.load()}, {"speed", wavSpeed_.load()},
+                     {"loop_a", wavA_.load() / cfg_.sampleRate}, {"loop_b", wavB_.load() / cfg_.sampleRate}}},
           {"cpu_est", cpuEstimate()},
           {"lang", i18n().code()},
           {"langs", I18n::available(cfg_.langDir)},
@@ -922,7 +938,15 @@ json Engine::handleLocked(const json& c) {
   }
   if (cmd == "transport") {
     if (c.contains("play")) playing_.store(c["play"].get<bool>());
-    if (c.value("rewind", false)) wavPos_.store(0);
+    const float sr = cfg_.sampleRate;
+    const size_t len = wavLen_.load();
+    if (c.contains("speed")) wavSpeed_.store(clampf(c.value("speed", 1.0f), 0.5f, 1.5f));
+    if (c.value("clear_loop", false)) { wavA_.store(0); wavB_.store(0); }
+    if (c.contains("loop_a")) wavA_.store((size_t)clampf(c.value("loop_a", 0.0f) * sr, 0.0f, (float)len));
+    if (c.contains("loop_b")) wavB_.store((size_t)clampf(c.value("loop_b", 0.0f) * sr, 0.0f, (float)len));
+    if (c.contains("seek")) wavPos_.store((size_t)clampf(c.value("seek", 0.0f) * sr, 0.0f, (float)len));
+    if (c.value("rewind", false)) wavPos_.store(wavA_.load());
+    changed();
     return ok();
   }
   return fail("err.unknown_command", cmd);
