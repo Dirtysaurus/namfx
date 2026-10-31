@@ -888,6 +888,47 @@ json Engine::handleLocked(const json& c) {
     changed();
     return ok();
   }
+  if (cmd == "preset_index" || cmd == "preset_step") {  // MIDI program change / footswitch: walks the setlist (all presets if empty)
+    std::vector<std::string> list;
+    const json files = filesJson();
+    for (auto& s : settings_.value("setlist", json::array()))
+      for (auto& p : files["presets"]) if (p == s) { list.push_back(s.get<std::string>()); break; }
+    if (list.empty()) for (auto& p : files["presets"]) list.push_back(p.get<std::string>());
+    if (list.empty()) return fail("err.file", "no presets");
+    int idx;
+    if (cmd == "preset_index") {
+      idx = std::clamp(c.value("index", 0), 0, (int)list.size() - 1);
+    } else {
+      int cur = -1;
+      for (size_t i = 0; i < list.size(); ++i) if (list[i] == presetFile_) cur = (int)i;
+      const int n = (int)list.size();
+      idx = ((cur < 0 ? 0 : cur + (c.value("dir", 1) >= 0 ? 1 : -1)) % n + n) % n;
+    }
+    std::string err;
+    if (!loadPresetFile(list[idx], err)) return fail("err.file", err);
+    return ok({{"file", list[idx]}});
+  }
+  if (cmd == "expression") {  // {value 0..1}: expression pedal / stick. Drives the first wah in Pedal mode, else the first volume block.
+    const float v = clampf(c.value("value", 0.0f), 0.0f, 1.0f);
+    auto apply = [&](const BlockPtr& b) {
+      if (b->def->type == "wah" && b->get(0) < 0.5f) { b->setByName("pos", v * 100.0f); return true; }
+      return false;
+    };
+    bool done = false;
+    for (auto& nd : nodes_) {
+      done = done || apply(nd.block);
+      for (auto& b : nd.a) done = done || apply(b);
+      for (auto& b : nd.b) done = done || apply(b);
+    }
+    if (!done) {
+      for (auto& nd : nodes_) {
+        BlockPtr b = nd.block;
+        if (b->def->type == "volume") { b->setByName("level", v <= 0.0f ? -60.0f : -40.0f + 40.0f * v); done = true; break; }
+      }
+    }
+    if (done) changed();
+    return ok({{"applied", done}});
+  }
   if (cmd == "setlist_set") {  // {files:[preset file names]}: the order L1/R1 and the web arrows walk through (empty = all presets)
     json list = json::array();
     if (c.contains("files") && c["files"].is_array()) {

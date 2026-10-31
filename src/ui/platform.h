@@ -11,6 +11,7 @@
 namespace ui {
 
 using BtnFn = std::function<void(Btn, bool repeat)>;
+using AxisFn = std::function<void(int code, float norm)>;  // analog stick / trigger: evdev ABS code, position 0..1
 
 // Display output via SDL2 (KMSDRM on the R36S, a window on a PC).
 class Display {
@@ -31,7 +32,7 @@ class Display {
 class GamepadInput {
  public:
   bool open(const std::string& nameHint = "GO-Super Gamepad");
-  void poll(const BtnFn& fn);
+  void poll(const BtnFn& fn, const AxisFn& axis = {});
   void close();
   ~GamepadInput() { close(); }
   bool selectHeld() const { return held_[(int)Btn::Select]; }
@@ -42,6 +43,8 @@ class GamepadInput {
   int fd_ = -1;
   std::string dev_;
   bool held_[16] = {};
+  float lastAxis_[64];
+  bool axisInit_ = false;
   std::chrono::steady_clock::time_point next_[16];
 };
 

@@ -35,7 +35,7 @@ def make_asound(root: Path, with_usb=True):
 
 
 class Run:
-    def __init__(self, tmp: Path, extra=(), connect=True):
+    def __init__(self, tmp: Path, extra=(), connect=True, env_extra=None):
         s = socket.socket()
         s.bind(("127.0.0.1", 0))
         self.port = s.getsockname()[1]
@@ -43,7 +43,7 @@ class Run:
         self.data = tmp / "data"
         if not self.data.exists():
             shutil.copytree(ROOT / "data", self.data)
-        env = dict(os.environ, NAMFX_ASOUND_ROOT=str(tmp / "asound"), NAMFX_ASOUND_CONF=str(tmp / "asound.conf"))
+        env = dict(os.environ, NAMFX_ASOUND_ROOT=str(tmp / "asound"), NAMFX_ASOUND_CONF=str(tmp / "asound.conf"), **(env_extra or {}))
         self.p = subprocess.Popen([str(EXE), "--null-audio", "--no-display", "--no-lv2", "--no-hotspot", "--data", str(self.data),
                                    "--port", str(self.port), *extra], cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT, text=True)
@@ -184,6 +184,13 @@ def main():
             m = r.cmd(cmd="add_block", type=typ)
             check(m["ok"], f"{typ} block can be added")
             check(r.cmd(cmd="set_param", id=m["id"], param=prm, value=50)["ok"], f"{typ}.{prm} can be set")
+        wah = r.cmd(cmd="add_block", type="wah")["id"]
+        check(r.cmd(cmd="expression", value=0.25)["applied"] is True, "expression drives the wah")
+        with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+            blk = [b for b in json.load(resp)["chain"] if b["id"] == wah][0]
+        check(abs(blk["params"]["pos"] - 25.0) < 0.01, "wah position follows the expression value")
+        check(r.cmd(cmd="preset_step", dir=1)["ok"], "preset_step loads a preset")
+        check(r.cmd(cmd="preset_index", index=0)["ok"], "preset_index loads a preset")
         r.cmd(cmd="metronome", on=False)
         check(r.cmd(cmd="setlist_set", files=["b.json", "a.json"])["ok"], "setlist accepted")
         with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
@@ -241,6 +248,30 @@ def main():
     try:
         a = r.audio()
         check(a["manual"] and a["active"]["capture"] == "hw:9,9", "--capture / --in-channel win and are reported as manual")
+    finally:
+        r.stop()
+
+    # MIDI: bytes appended to a fake device file act like a controller
+    midi = tmp / "midi.bin"
+    midi.write_bytes(b"")
+    (tmp / "data" / "settings.json").write_text(json.dumps({"setlist": ["03_Dual_Amp.json", "01_Clean.json"]}))
+    r = Run(tmp, env_extra={"NAMFX_MIDI_DEV": str(midi)})
+    try:
+        def preset_file():
+            with urllib.request.urlopen(f"http://127.0.0.1:{r.port}/api/state", timeout=5) as resp:
+                return json.load(resp)["preset"]["file"]
+        with open(midi, "ab") as f:
+            f.write(bytes([0xC0, 0x01]))  # program change 1 = second entry of the setlist
+        end = time.time() + 8
+        while time.time() < end and preset_file() != "01_Clean.json":
+            time.sleep(0.1)
+        check(preset_file() == "01_Clean.json", "MIDI program change loads the Nth preset of the setlist")
+        with open(midi, "ab") as f:
+            f.write(bytes([0xB0, 64, 127]))  # footswitch CC 64 = next preset (wraps to the first)
+        end = time.time() + 8
+        while time.time() < end and preset_file() != "03_Dual_Amp.json":
+            time.sleep(0.1)
+        check(preset_file() == "03_Dual_Amp.json", "MIDI CC 64 steps to the next preset")
     finally:
         r.stop()
 

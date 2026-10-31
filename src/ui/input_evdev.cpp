@@ -5,6 +5,7 @@
 #include <linux/input.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <cmath>
 #include <cstring>
 #include "ui/platform.h"
 
@@ -52,11 +53,20 @@ bool GamepadInput::open(const std::string& hint) {
   return fd_ >= 0;
 }
 
-void GamepadInput::poll(const BtnFn& fn) {
+void GamepadInput::poll(const BtnFn& fn, const AxisFn& axis) {
   if (fd_ < 0) return;
+  if (!axisInit_) { for (float& v : lastAxis_) v = -1.0f; axisInit_ = true; }
   input_event ev;
   const auto now = std::chrono::steady_clock::now();
   while (read(fd_, &ev, sizeof(ev)) == (ssize_t)sizeof(ev)) {
+    if (ev.type == EV_ABS && axis && ev.code < 64) {
+      input_absinfo ai;
+      if (ioctl(fd_, EVIOCGABS(ev.code), &ai) == 0 && ai.maximum > ai.minimum) {
+        const float v = (float)(ev.value - ai.minimum) / (float)(ai.maximum - ai.minimum);
+        if (std::fabs(v - lastAxis_[ev.code]) >= 0.02f) { lastAxis_[ev.code] = v; axis(ev.code, v); }
+      }
+      continue;
+    }
     if (ev.type != EV_KEY) continue;
     const Btn b = mapCode(ev.code);
     if (b == Btn::None) continue;

@@ -19,6 +19,7 @@
 #include "i18n.h"
 #include "io/audio_alsa.h"
 #include "io/audio_devices.h"
+#include "io/midi_in.h"
 #include "io/wav.h"
 #include "net/hotspot.h"
 #include "net/http_server.h"
@@ -343,6 +344,8 @@ int main(int argc, char** argv) {
     return cur.empty() ? fx::T("ui.no_network", "no network") : "web " + cur + (port == 80 ? "" : ":" + std::to_string(port));
   };
 
+  fx::MidiInput midi([&](const json& c) { eng.handle(c); });  // USB MIDI controllers / footswitches
+  midi.start();
   fx::HttpServer server(port, webDir);
   {  // optional: "web_password" in data/settings.json protects the web UI and uploads (user "namfx")
     const json ws = eng.settings();
@@ -456,7 +459,10 @@ int main(int argc, char** argv) {
       }
       eng.touch();
     }
-    pad.poll(onBtn);
+    pad.poll(onBtn, [&](int code, float v) {  // an analog stick as the expression pedal (wah / volume); settings.expression_axis, default 4 = right stick Y
+      static const int exprAxis = eng.settings().value("expression_axis", 4);
+      if (code == exprAxis) eng.handle({{"cmd", "expression"}, {"value", 1.0f - v}});
+    });
     if (haveDisplay && !display.pollKeys(onBtn)) break;
     if (screens.update() && haveDisplay) {
       screens.render(canvas);
@@ -476,6 +482,7 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   std::printf("[namfx] exit\n");
+  midi.stop();
   server.stop();
   audio.stop();
   display.close();
