@@ -275,6 +275,27 @@ def main():
     finally:
         r.stop()
 
+    # mDNS: a plain DNS query for namfx.local gets this machine's address back
+    mport = 15353
+    r = Run(tmp, env_extra={"NAMFX_MDNS_PORT": str(mport)})
+    try:
+        q = bytes([0x12, 0x34, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]) + bytes([5]) + b"namfx" + bytes([5]) + b"local" + bytes([0, 0, 1, 0, 1])
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(2)
+        got = None
+        for _ in range(10):
+            s.sendto(q, ("127.0.0.1", mport))
+            try:
+                got = s.recvfrom(1500)[0]
+                break
+            except socket.timeout:
+                pass
+        check(got is not None and got[0:2] == bytes([0x12, 0x34]) and got[2] & 0x80 and got[7] >= 1, "mDNS answers a query for namfx.local")
+        check(got[-4:] != bytes([127, 0, 0, 1]), "the answer is a non-loopback address")
+        s.close()
+    finally:
+        r.stop()
+
     # optional web password: settings.json "web_password" -> HTTP Basic auth (user namfx)
     (tmp / "data" / "settings.json").write_text(json.dumps({"web_password": "s3cret"}))
     r = Run(tmp, connect=False)

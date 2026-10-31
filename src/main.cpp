@@ -23,6 +23,7 @@
 #include "io/wav.h"
 #include "net/hotspot.h"
 #include "net/http_server.h"
+#include "net/mdns.h"
 #include "ui/platform.h"
 
 namespace fs = std::filesystem;
@@ -346,6 +347,8 @@ int main(int argc, char** argv) {
 
   fx::MidiInput midi([&](const json& c) { eng.handle(c); });  // USB MIDI controllers / footswitches
   midi.start();
+  fx::Mdns mdns(eng.settings().value("hostname", "namfx"));  // http://namfx.local ("hostname" in data/settings.json)
+  if (!mdns.start()) std::fprintf(stderr, "[net] mDNS not started (port 5353 busy?)\n");
   fx::HttpServer server(port, webDir);
   {  // optional: "web_password" in data/settings.json protects the web UI and uploads (user "namfx")
     const json ws = eng.settings();
@@ -482,6 +485,7 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   std::printf("[namfx] exit\n");
+  mdns.stop();
   midi.stop();
   server.stop();
   audio.stop();

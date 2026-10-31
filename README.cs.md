@@ -194,6 +194,10 @@ a toto heslo).
 - **Záložka Pódium:** velký název presetu, předchozí/další preset, ztlumení, měřič výstupu a CPU; drží displej telefonu rozsvícený.
 - Měřič OUT v záhlaví zčervená, když výstup klipuje (nad −1 dBFS).
 
+## http://namfx.local
+
+namfx odpovídá na mDNS, takže web je i na `http://namfx.local` (jméno z `"hostname"` v `data/settings.json`). Funguje na iOS, macOS, Windows 10+ a Linuxu s nss-mdns; mnohé verze Androidu stále potřebují IP adresu (nebo QR kód na obrazovce konzole). Na hotspotu je adresa `10.42.0.1`.
+
 ## MIDI a páky
 
 - **USB MIDI kontroler / footswitch** (class-compliant, do USB portu; `/dev/snd/midiC*D*`): *Program Change n* načte n-tý preset setlistu (0 = první), *CC 11* je expression pedál, *CC 64* další preset, *CC 65* předchozí preset.

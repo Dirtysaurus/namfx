@@ -193,6 +193,10 @@ at home but not on a shared network or the hotspot. Add `"web_password": "your p
 - **Stage tab:** big preset name, previous/next preset, mute, output meter and CPU; keeps the phone screen on.
 - The OUT meter in the header turns red when the output clips (above −1 dBFS).
 
+## http://namfx.local
+
+namfx answers mDNS queries, so the web UI is also at `http://namfx.local` (name from `"hostname"` in `data/settings.json`). Works on iOS, macOS, Windows 10+ and Linux with nss-mdns; many Android versions still need the IP address (or the QR code on the console screen). On the hotspot the address is `10.42.0.1`.
+
 ## MIDI and the sticks
 
 - **USB MIDI controller / footswitch** (class-compliant, plugged into the USB port; `/dev/snd/midiC*D*`): *Program Change n* loads the n-th preset of the setlist (0 = first), *CC 11* is the expression pedal, *CC 64* next preset, *CC 65* previous preset.
