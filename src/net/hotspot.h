@@ -19,7 +19,7 @@ using json = nlohmann::json;
 struct HotspotConfig {
   std::string mode = "auto";  // auto | always | off
   std::string ssid = "namfx";
-  std::string password = "namfx1234";
+  std::string password;  // empty = open network (set one after the first connection)
   static HotspotConfig fromJson(const json& j);
   json toJson() const;
 };

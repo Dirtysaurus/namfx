@@ -114,8 +114,11 @@ def main():
         check([c["id"] for c in a["cards"]] == ["rockchiprk817co", "Twin", "Loopback"], "all three cards are listed")
         check(a["cards"][1]["usb"] and a["cards"][1]["usbid"] == "0644:8010" and not a["cards"][0]["usb"], "USB flag and id")
         check(not a["manual"], "not manual")
-        pw = json.loads((r.data / "settings.json").read_text())["hotspot"]["password"]
-        check(len(pw) == 10 and pw != "namfx1234", "a random hotspot password is generated on first start")
+        check(r.cmd(cmd="net_set", password="")["ok"], "an empty hotspot password (open network) is accepted")
+        m = r.cmd(cmd="net_set", password="short")
+        check(not m["ok"] and m["code"] == "err.net_password", "a 5 character password is refused")
+        check(r.cmd(cmd="net_set", password="longenough1")["ok"], "an 8-63 character password is accepted")
+        r.cmd(cmd="net_set", password="")
 
         check(r.cmd(cmd="audio_set", device="internal")["ok"], "audio_set internal accepted")
         a = r.wait(lambda a: a["active"]["device"] == "internal", "internal chosen")

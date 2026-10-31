@@ -177,7 +177,7 @@ support AP mode (`iw list` → *Supported interface modes: AP*).
 - **Always:** own network whenever namfx runs (the console leaves its normal WiFi).
 - **Off:** never.
 
-Default network `namfx`; the password is generated randomly on the first start (shown under System → Network and in the console footer, editable). Connect the phone and open `http://10.42.0.1`
+Default network `namfx`, **open (no password)** so the first connection just works. Then set a password under System → Network (8–63 characters; empty = open again). A web banner reminds you while the network is open. Connect the phone and open `http://10.42.0.1`
 (the address is also in the bottom right of the console screen). Mode, name and password are set
 in the web UI (System → Network, also *Start / Stop hotspot now*) or on the console
 (Start → Own WiFi) and stored in `data/settings.json`. The hotspot stops when namfx quits and

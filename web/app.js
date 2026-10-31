@@ -747,7 +747,7 @@ function renderNet() {
   let rows;
   if (!n.available) rows = [[t('sys.net_status', 'Status'), t('sys.net_na', 'not available') + (n.error ? ` (${n.error})` : '')]];
   else if (n.hotspot) rows = [[t('sys.net_status', 'Status'), t('sys.net_ap', 'own network active')], [t('sys.ssid', 'Network name'), n.ap ? n.ap.ssid : ''],
-    [t('sys.password', 'Password'), n.ap ? n.ap.password : ''], [t('sys.net_addr', 'Web UI'), `http://${n.ip || '10.42.0.1'}${port}`]];
+    [t('sys.password', 'Password'), n.ap && n.ap.password ? n.ap.password : t('sys.net_open', 'none (open network)')], [t('sys.net_addr', 'Web UI'), `http://${n.ip || '10.42.0.1'}${port}`]];
   else rows = [[t('sys.net_status', 'Status'), n.wifi_state && n.wifi_state.startsWith('connected') ? t('sys.net_wifi', 'WiFi {0}', [n.connection]) : (n.wifi_state || '-')],
     [t('sys.net_addr', 'Web UI'), n.ip ? `http://${n.ip}${port}` : '-']];
   if (n.error && n.available) rows.push([t('sys.net_err', 'Error'), n.error]);
@@ -756,6 +756,7 @@ function renderNet() {
   [...$('#netMode').children].forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
   if (document.activeElement !== $('#netSsid')) $('#netSsid').value = cfg.ssid || 'namfx';
   if (document.activeElement !== $('#netPass')) $('#netPass').value = cfg.password || '';
+  $('#netOpenHint').hidden = !(n.hotspot && n.ap && !n.ap.password);
   $('#netStart').hidden = !n.available || !!n.hotspot;
   $('#netStop').hidden = !n.hotspot;
 }

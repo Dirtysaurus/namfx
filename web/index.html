@@ -163,6 +163,8 @@
         </div>
         <label class="prow"><span data-i18n="sys.ssid">Network name</span><input type="text" id="netSsid" maxlength="32" style="grid-column: span 2"></label>
         <label class="prow"><span data-i18n="sys.password">Password</span><input type="text" id="netPass" maxlength="63" style="grid-column: span 2"></label>
+        <p class="info" data-i18n="sys.net_pass_hint">Leave the password empty for an open network (easy first connection), then set a password here: 8–63 characters. It applies when the hotspot restarts.</p>
+        <p class="info" id="netOpenHint" hidden data-i18n="sys.net_open_hint">The hotspot is open: anyone in range can connect and control namfx. Set a password.</p>
         <div class="transport">
           <button class="pill" id="netSave" data-i18n="sys.net_save">Save name and password</button>
           <button class="pill" id="netStart" data-i18n="sys.net_start">Start hotspot now</button>

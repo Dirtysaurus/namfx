@@ -109,7 +109,7 @@ json Hotspot::status() const {
 
 std::string Hotspot::shortInfo() const {
   std::lock_guard<std::mutex> lk(mtx_);
-  if (active_) return "AP " + apSsid_ + " / " + apPassword_ + " · " + (ip_.empty() ? "10.42.0.1" : ip_);
+  if (active_) return "AP " + apSsid_ + (apPassword_.empty() ? " (open)" : " / " + apPassword_) + " · " + (ip_.empty() ? "10.42.0.1" : ip_);
   return "";
 }
 
@@ -209,7 +209,16 @@ bool Hotspot::startAp(const HotspotConfig& c) {
   }
   std::string out;
   runProgram({"nmcli", "connection", "delete", kConn}, out, 10);  // old settings (ssid/password) out
-  const int rc = runProgram({"nmcli", "device", "wifi", "hotspot", "ifname", dev, "con-name", kConn, "ssid", c.ssid, "password", c.password}, out, 30);
+  int rc;
+  if (c.password.empty()) {  // open network: nmcli's "wifi hotspot" always adds WPA, so build the AP connection by hand
+    std::string o2;
+    rc = runProgram({"nmcli", "connection", "add", "type", "wifi", "ifname", dev, "con-name", kConn, "autoconnect", "no", "ssid", c.ssid,
+                     "802-11-wireless.mode", "ap", "802-11-wireless.band", "bg", "ipv4.method", "shared"}, out, 20);
+    if (rc == 0) rc = runProgram({"nmcli", "connection", "up", kConn}, o2, 30);
+    if (rc != 0 && !o2.empty()) out = o2;
+  } else {
+    rc = runProgram({"nmcli", "device", "wifi", "hotspot", "ifname", dev, "con-name", kConn, "ssid", c.ssid, "password", c.password}, out, 30);
+  }
   {
     std::lock_guard<std::mutex> lk(mtx_);
     if (rc == 0) {

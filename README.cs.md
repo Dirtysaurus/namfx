@@ -177,7 +177,7 @@ z telefonu. Používá NetworkManager (`nmcli device wifi hotspot`); WiFi čip m
 - **Vždy:** vlastní síť po celou dobu běhu namfx (konzole opustí běžnou WiFi).
 - **Vypnuto:** nikdy.
 
-Výchozí síť `namfx`; heslo se při prvním spuštění náhodně vygeneruje (vidíte ho v System → Network a v zápatí konzole, jde změnit). Připoj telefon a otevři `http://10.42.0.1` (adresa je
+Výchozí síť `namfx` je **otevřená (bez hesla)**, aby první připojení fungovalo hned. Heslo pak nastavíte v System → Network (8–63 znaků; prázdné = zase otevřená). Dokud je síť otevřená, web na to upozorňuje. Připoj telefon a otevři `http://10.42.0.1` (adresa je
 i vpravo dole na obrazovce konzole). Režim, název a heslo se nastavují ve web UI (Systém → Síť,
 tam i *Spustit / Zastavit hotspot teď*) nebo na konzoli (Start → Vlastní WiFi) a ukládají se do
 `data/settings.json`. Po ukončení namfx se hotspot vypne a NetworkManager se znovu připojí ke

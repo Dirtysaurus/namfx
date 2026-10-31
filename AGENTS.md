@@ -133,7 +133,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
   - `audio_set {device: auto|internal|card:<id>, channel: auto|left|right|sum}`: validated and saved in `data/settings.json` (`audio`), applied by the **main loop** (not under the engine lock) through `AudioDriver::restart()`; a failed start falls back to the internal card, then to the null driver
   - `audio_scan`: rescans the cards
   - `audio_set` also takes `output: same|bluetooth|pcm:<ALSA name>`. `bluetooth` plays to ALSA `default` while `/etc/asound.conf` mentions Loopback (the console's bt-vol setup, see §2 *Bluetooth*), otherwise to the card; the main loop re-checks every 2 s
-  - Other new commands: `mute {on?}`, `undo`/`redo`, `metronome {on,bpm,volume}`, `gain_wizard {on}`. Optional `web_password` in `data/settings.json` turns on HTTP Basic auth (user `namfx`). The hotspot password is random per console. `.github/workflows/release.yml` builds an aarch64 tarball on `v*` tags (needs a public repo for the free arm runner)
+  - Other new commands: `mute {on?}`, `undo`/`redo`, `metronome {on,bpm,volume}`, `gain_wizard {on}`. Optional `web_password` in `data/settings.json` turns on HTTP Basic auth (user `namfx`). The hotspot is open until the owner sets a password. `.github/workflows/release.yml` builds an aarch64 tarball on `v*` tags (needs a public repo for the free arm runner)
   - State: `state.audio_dev` = `{cards[], active{device,label,usb,channel,capture,playback,description,missing?}, choice{device,channel}, manual, error?}` (`state.audio` is the older `{rate,block}` object)
   - Errors: `err.audio_device`, `err.audio_channel`
   - `--capture` / `--playback` / `--in-channel` win over the choice (`manual: true`)
@@ -146,7 +146,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 
 ## 6. Hotspot (new in v0.3.1)
 
-- **Settings:** `data/settings.json` → `"hotspot": {"mode":"auto","ssid":"namfx","password":"<random, 10 chars>"}`. The password is generated on first start (a fixed default would be public once the repo is) and shown in the web UI and the console footer.
+- **Settings:** `data/settings.json` → `"hotspot": {"mode":"auto","ssid":"namfx","password":""}`. An empty password = **open AP** (decided by the owner: the first connection must work without knowing anything; the web warns and the password is set afterwards). An open AP is built with `nmcli connection add … 802-11-wireless.mode ap ipv4.method shared` + `connection up`, because `nmcli device wifi hotspot` always adds WPA.
 - **Modes:**
   - **auto:** no WiFi connection for 20 s → start the AP.
   - **always:** keep the AP up while namfx runs.

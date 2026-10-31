@@ -58,18 +58,6 @@ Engine::Engine(const Config& cfg) : cfg_(cfg) {
     std::ifstream sf(dataPath("settings.json"));
     json st = json::parse(sf, nullptr, false);
     if (!st.is_discarded() && st.is_object()) settings_ = st;
-    // the hotspot password is random per console (a fixed default would be public knowledge)
-    json hs = settings_.value("hotspot", json::object());
-    if (!hs.is_object()) hs = json::object();
-    if (!hs.contains("password")) {
-      static const char kChars[] = "abcdefghjkmnpqrstuvwxyz23456789";
-      std::random_device rd;
-      std::string pw;
-      for (int i = 0; i < 10; ++i) pw += kChars[rd() % (sizeof(kChars) - 1)];
-      hs["password"] = pw;
-      settings_["hotspot"] = hs;
-      saveSettings();
-    }
   }
   CatalogPaths cp;
   cp.fxDir = cfg.fxDir;
@@ -604,7 +592,7 @@ json Engine::handleLocked(const json& c) {
       const std::string v = c.value("password", "");
       bool ascii = true;
       for (unsigned char ch : v) if (ch < 0x20 || ch > 0x7E) ascii = false;
-      if (v.size() < 8 || v.size() > 63 || !ascii) return fail("err.net_password");
+      if (!v.empty() && (v.size() < 8 || v.size() > 63 || !ascii)) return fail("err.net_password");  // empty = open network
       h["password"] = v;
     }
     settings_["hotspot"] = h;
