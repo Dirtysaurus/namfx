@@ -1114,7 +1114,7 @@ static void drawQrCode(Canvas& c, const std::string& text, float x, float y, flo
 static std::string wifiQrText(const std::string& ssid, const std::string& pw) {
   auto esc = [](const std::string& s) {
     std::string o;
-    for (char ch : s) { if (std::string("\;,:\"").find(ch) != std::string::npos) o += '\'; o += ch; }
+    for (char ch : s) { if (std::string("\\;,:\"").find(ch) != std::string::npos) o += '\\'; o += ch; }
     return o;
   };
   return pw.empty() ? "WIFI:T:nopass;S:" + esc(ssid) + ";;" : "WIFI:T:WPA;S:" + esc(ssid) + ";P:" + esc(pw) + ";;";

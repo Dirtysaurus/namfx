@@ -758,7 +758,7 @@ function renderNet() {
   if (document.activeElement !== $('#netPass')) $('#netPass').value = cfg.password || '';
   const qrBox = $('#netQr');
   if (window.qrcode && n.hotspot && n.ap) {  // QR codes: join the hotspot, open the page (also for a phone that is already connected)
-    const esc = (s) => s.replace(/([\;,:"])/g, '\$1');
+    const esc = (s) => s.replace(/([\\;,:"])/g, '\\$1');
     const wifi = n.ap.password ? `WIFI:T:WPA;S:${esc(n.ap.ssid)};P:${esc(n.ap.password)};;` : `WIFI:T:nopass;S:${esc(n.ap.ssid)};;`;
     const url = `http://${n.ip || '10.42.0.1'}${port}`;
     const mk = (txt, label) => { const q = window.qrcode(0, 'M'); q.addData(txt); q.make(); const d = el('div', {}, label); d.insertAdjacentHTML('afterbegin', q.createSvgTag({ cellSize: 4, margin: 2, scalable: true })); return d; };
