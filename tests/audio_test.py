@@ -309,7 +309,7 @@ def main():
         i = raw.find(b"data") + 8
         n = (len(raw) - i) // 4
         samples = struct.unpack("<%df" % n, raw[i:i + n * 4])
-        plan = [l for l in p.stderr.splitlines() if l.startswith("[graph]")][-1].split()[1]
+        plan = [l for l in p.stderr.splitlines() if l.startswith("[graph]")][-1].split()[1].rstrip(":")
         return samples, plan
 
     for preset, want, shift in (("02_Plexi_Crunch.json", "pipeline", 128 * 2), ("03_Dual_Amp.json", "fork", 0)):
