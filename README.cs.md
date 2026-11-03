@@ -206,6 +206,8 @@ namfx odpovídá na mDNS, takže web je i na `http://namfx.local` (jméno z `"ho
 
 ## Zvukový vstup
 
+**Citlivost vstupu (interní jack).** Capture gain kodeku (`Record`) nastavuje namfx sám (System → Audio input → Citlivost vstupu, výchozí 40 %, `hw_gain` v `data/settings.json`). Na 100 % je vstup jacku jen šum a stejnosměrná složka a zesilovač s velkým gainem z toho udělá hlasitý brum; namfx navíc ze vstupu odstraňuje stejnosměrnou složku. USB rozhraní mají vlastní knob.
+
 **Bluetooth sluchátka.** Na R36S řeší Bluetooth zvuk systém (bluealsa + služba `bt-vol`, která po připojení sluchátek přesměruje ALSA `default` na kartu Loopback a přes `alsaloop` ji pošle do sluchátek). Zvolte *Výstup → Bluetooth sluchátka* a namfx hraje na `default`, jakmile jsou sluchátka připojená, a po odpojení se vrátí na zvukovou kartu. Latence je vysoká (zhruba 150–250 ms), na cvičení stačí, na hraní živě ne. Bluetooth nejdřív zapněte systémovým menu WiFi/BT; USB zvukové rozhraní i Bluetooth sdílejí jediný USB port konzole s WiFi čipem.
 
 Zvukovou kartu vyberete ve webu (Systém → Zvukový vstup) nebo na konzoli (Start → Zvukový vstup):

@@ -97,6 +97,7 @@ AudioResolved resolveAudio(const std::vector<AudioCard>& cards, const AudioChoic
     r.found = true;
     r.usb = pick->usb;
     r.cardId = pick->id;
+    r.cardIndex = pick->index;
     r.label = pick->name;
     r.device = pick->usb ? "card:" + pick->id : "internal";
     // plughw converts the sample format (USB interfaces are often 24-bit packed)

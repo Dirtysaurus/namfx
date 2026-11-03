@@ -14,6 +14,7 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
+#include <cmath>
 #include "dsp/engines.h"
 #include "engine.h"
 #include "i18n.h"
@@ -276,6 +277,7 @@ int main(int argc, char** argv) {
     ch.device = a.value("device", "auto");
     ch.channel = a.value("channel", "auto");
     ch.output = a.value("output", "same");
+    ch.hwGain = a.value("hw_gain", 40);
     return ch;
   };
   auto audioOptions = [&](const fx::AudioResolved& r) {
@@ -290,6 +292,15 @@ int main(int argc, char** argv) {
   std::string audioError;
   std::atomic<bool> audioApply{false};  // audio_set -> the main loop restarts the driver outside the engine lock
 
+  // The internal codec's capture gain ("Record") is left wherever the last session put it, often at 100 %, where the jack input is
+  // pure noise (a high-gain amp turns that into a loud hum). So namfx sets it itself: percent from the choice, default 40.
+  auto applyHwGain = [&](const fx::AudioResolved& r) {
+    if (nullAudio || captureGiven || !r.found || r.usb || r.cardIndex < 0) return;
+    const int raw = (int)std::lround(std::clamp(audioChoice().hwGain, 0, 100) * 2.55);
+    std::string out;
+    fx::runProgram({"amixer", "-c", std::to_string(r.cardIndex), "-q", "sset", "Record", "0," + std::to_string(raw)}, out, 5);  // left is unused (DC)
+  };
+  applyHwGain(audioActive);
   fx::AudioDriver audio(eng, audioOptions(audioActive));
   if (!audio.start(nullAudio, err)) {
     std::fprintf(stderr, "[audio] %s - falling back to the null driver\n", err.c_str());
@@ -311,7 +322,7 @@ int main(int argc, char** argv) {
     if (!audioActive.missing.empty()) act["missing"] = audioActive.missing;
     act["bt_route"] = audioActive.btRoute;
     json st = {{"cards", cards}, {"active", act},
-               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}}},
+               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}, {"hw_gain", a.value("hw_gain", 40)}}},
                {"manual", captureGiven || playbackGiven || inChannelGiven}};
     if (!audioError.empty()) st["error"] = audioError;
     return st;
@@ -453,6 +464,7 @@ int main(int argc, char** argv) {
           audio.restart(audioOptions(r), true, e);
         }
       }
+      applyHwGain(r);
       std::printf("[audio] %s\n", audio.description().c_str());
       {
         std::lock_guard<std::mutex> lk(audioMtx);

@@ -140,6 +140,14 @@ void Engine::process(const float* in, float* outL, float* outR, int n) {
   }
   const float gi = dbToLin(inGain_.load(std::memory_order_relaxed));
   float pin = 0;
+  // DC blocker (about 11 Hz): the codec's mic input carries a DC offset that grows with the capture gain; a high-gain amp turns it into hum
+  for (int i = 0; i < n; ++i) {
+    const float x = L[i];
+    const float y = x - dcX_ + 0.9985f * dcY_;
+    dcX_ = x;
+    dcY_ = std::fabs(y) < 1e-20f ? 0.0f : y;
+    L[i] = y;
+  }
   float pre = 0;  // peak before the input gain (level wizard)
   for (int i = 0; i < n; ++i) pre = std::max(pre, std::fabs(L[i]));
   if (wizOn_.load(std::memory_order_relaxed)) wizMax_.store(std::max(pre, wizMax_.load(std::memory_order_relaxed)), std::memory_order_relaxed);
@@ -573,7 +581,7 @@ json Engine::handleLocked(const json& c) {
         {"err.unknown_type", "Unknown block type"}, {"err.net_mode", "Invalid hotspot mode"},
         {"err.net_ssid", "Network name must have 1-32 characters"}, {"err.net_password", "Password must have 8-63 characters (letters, digits, symbols)"},
         {"err.net_unavailable", "Network control not available"},
-        {"err.audio_output", "Invalid output device"}, {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
+        {"err.audio_output", "Invalid output device"}, {"err.audio_gain", "Input sensitivity must be 0-100 %"}, {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
     auto it = en.find(code);
     std::string msg = it != en.end() ? it->second : code;
     if (!detail.empty()) msg += ": " + detail;
@@ -634,6 +642,12 @@ json Engine::handleLocked(const json& c) {
       const std::string ch = c["channel"].is_string() ? c["channel"].get<std::string>() : "";
       if (ch != "auto" && ch != "left" && ch != "right" && ch != "sum") return fail("err.audio_channel", ch);
       a["channel"] = ch;
+    }
+    if (c.contains("hw_gain")) {  // capture sensitivity of the internal codec in percent (the 'Record' mixer control)
+      if (!c["hw_gain"].is_number()) return fail("err.audio_gain");
+      const double g = c["hw_gain"].get<double>();
+      if (g < 0 || g > 100) return fail("err.audio_gain", std::to_string(g));
+      a["hw_gain"] = std::round(g);
     }
     if (c.contains("output")) {  // playback to another ALSA device (Bluetooth): "same" or "pcm:<name>"
       const std::string o = c["output"].is_string() ? c["output"].get<std::string>() : "";

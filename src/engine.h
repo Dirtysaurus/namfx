@@ -124,6 +124,8 @@ class Engine {
   std::atomic<float> loopSecs_{0.0f};
   int loopState_ = 0, loopPos_ = 0, loopLen_ = 0;  // 0 empty, 1 rec, 2 play, 3 overdub, 4 stopped
 
+  float dcX_ = 0.0f, dcY_ = 0.0f;  // input DC blocker state (audio thread)
+
   // input level wizard
   std::atomic<bool> wizOn_{false};
   std::atomic<float> wizMax_{0.0f};

@@ -760,6 +760,9 @@ function renderAudio() {
   if (document.activeElement !== $('#audDev')) $('#audDev').replaceChildren(...opts.map(([v, n]) => el('option', { value: v, selected: v === cur }, n)));
   [...$('#audCh').children].forEach((b) => b.classList.toggle('on', b.dataset.ch === (ch.channel || 'auto')));
   $('#audOut').value = ch.output || 'same';
+  $('#audGainRow').hidden = !!act.usb;  // the internal codec only; a USB interface has its own knob
+  if (document.activeElement !== $('#audGain')) $('#audGain').value = ch.hw_gain == null ? 40 : ch.hw_gain;
+  $('#audGainV').textContent = $('#audGain').value + ' %';
 }
 
 function renderNet() {
@@ -833,6 +836,7 @@ function initSys() {
   $('#themeSel').onchange = (e) => send({ cmd: 'set_ui', theme: e.target.value });
   $('#audDev').onchange = (e) => send({ cmd: 'audio_set', device: e.target.value });
   [...$('#audCh').children].forEach((b) => (b.onclick = () => send({ cmd: 'audio_set', channel: b.dataset.ch })));
+  $('#audGain').oninput = (e) => { $('#audGainV').textContent = e.target.value + ' %'; send({ cmd: 'audio_set', hw_gain: +e.target.value }); };
   $('#audOut').onchange = (e) => send({ cmd: 'audio_set', output: e.target.value });
   $('#audScan').onclick = () => send({ cmd: 'audio_scan' });
   $('#muteBtn').onclick = () => send({ cmd: 'mute' });

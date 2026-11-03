@@ -22,6 +22,7 @@ struct AudioCard {
 struct AudioChoice {
   std::string device = "auto";   // auto | internal | card:<id>
   std::string channel = "auto";  // auto | left | right | sum
+  int hwGain = 40;               // internal codec only: capture sensitivity in percent (mixer control "Record")
   std::string output = "same";   // same (as the input card) | bluetooth | pcm:<ALSA name>
 };
 
@@ -32,6 +33,7 @@ struct AudioResolved {
   std::string cardId;
   std::string output;               // custom playback device ("" = the input card)
   std::string missing;              // the chosen card isn't there (unplugged): we fell back
+  int cardIndex = -1;               // ALSA card number of the picked card
   bool btRoute = false;             // output=bluetooth and the system routes "default" to Bluetooth right now
   bool usb = false, found = false;  // found = a card was picked from the list
   int channel = 1;                  // 0 left, 1 right, 2 sum

@@ -205,6 +205,8 @@ namfx answers mDNS queries, so the web UI is also at `http://namfx.local` (name 
 
 ## Audio input
 
+**Input sensitivity (internal jack).** The codec's capture gain (`Record`) is set by namfx itself (System → Audio input → Input sensitivity, default 40 %, `hw_gain` in `data/settings.json`). At 100 % the jack input is pure noise and DC offset, and a high-gain amp turns that into a loud hum; namfx also removes DC from the input. USB interfaces keep their own gain knob.
+
 **Bluetooth headphones.** On the R36S the Bluetooth sound is done by the system (bluealsa + a `bt-vol` service that points ALSA `default` to a Loopback card while headphones are connected and forwards it with `alsaloop`). Pick *Output → Bluetooth headphones* and namfx plays to `default` as soon as the headphones are connected, and back to the sound card when they disconnect. Latency is high (roughly 150–250 ms), fine for practice, not for playing live. Enable Bluetooth first with the system's WiFi/BT menu; the USB sound interface and Bluetooth share the console's single USB port with the WiFi chip.
 
 Pick the sound card in the web UI (System → Audio input) or on the console (Start → Audio input):

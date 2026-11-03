@@ -152,7 +152,8 @@ SK = {
     "sys.aud_hint": "Auto použije USB rozhranie (napr. GO Twin), ak je pripojené, inak interný vstup. Výstup ide na rovnakú kartu. Interný jack má signál len v pravom kanáli.",
     "sys.aud_active": "Práve používa", "sys.aud_missing": "karta „{0}“ nie je pripojená", "sys.aud_manual": "Poznámka",
     "sys.aud_manual_val": "spustené s --capture / --playback / --in-channel: voľba nižšie sa ignoruje", "err.audio_device": "Neplatná zvuková karta",
-    "err.audio_channel": "Neplatný vstupný kanál", "ui.cents": "centov", "ui.n_files": "{0} súborov",
+    "err.audio_channel": "Neplatný vstupný kanál", "sys.aud_hwgain": "Citlivosť vstupu (hardvér)",
+    "err.audio_gain": "Citlivosť vstupu musí byť 0–100 %", "ui.cents": "centov", "ui.n_files": "{0} súborov",
 }
 
 

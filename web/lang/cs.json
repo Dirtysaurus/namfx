@@ -648,6 +648,8 @@
   "sys.aud_channel": "Vstupní kanál",
   "sys.aud_scan": "Vyhledat zvukové karty",
   "sys.aud_signal": "Signál na vstupu",
+  "sys.aud_hwgain": "Citlivost vstupu (hardware)",
+  "err.audio_gain": "Citlivost vstupu musí být 0–100 %",
   "sys.wav_speed": "Rychlost",
   "sys.wav_a": "Nastavit A",
   "sys.wav_b": "Nastavit B",
