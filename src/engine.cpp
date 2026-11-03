@@ -53,6 +53,10 @@ Engine::Engine(const Config& cfg) : cfg_(cfg) {
   outSm_.reset(1.0f);
   tuner_.prepare(cfg.sampleRate);
   loopBuf_.assign((size_t)(cfg.sampleRate * 30.0f) * 2, 0.0f);
+  if (cfg.cores >= 2) {
+    worker_.reset(new Worker());
+    worker_->start(cfg.workerCpu, cfg.workerCpu >= 0 ? 79 : 0);
+  }
   for (const char* d : {"nam", "ir", "presets", "wav", "fx", "lv2"}) fs::create_directories(dataPath(d));
   {
     std::ifstream sf(dataPath("settings.json"));
@@ -269,7 +273,9 @@ std::vector<BlockPtr>* Engine::laneOf(const Location& loc) {
 
 void Engine::rebuild() {
   graph_.collect();
-  graph_.set(new Graph(nodes_, cfg_.block, cfg_.sampleRate));
+  auto* g = new Graph(nodes_, cfg_.block, cfg_.sampleRate, worker_.get());
+  plan_ = g->plan();
+  graph_.set(g);
   changed();
 }
 
@@ -420,6 +426,8 @@ json Engine::state() {
           {"metronome", {{"on", metOn_.load()}, {"bpm", metBpm_.load()}, {"volume", metVol_.load()}}},
           {"looper", {{"state", std::vector<std::string>{"empty", "rec", "play", "overdub", "stopped"}[std::clamp(loopStateA_.load(), 0, 4)]},
                       {"seconds", loopSecs_.load()}, {"max_seconds", (float)(loopBuf_.size() / 2) / cfg_.sampleRate}}},
+          {"threads", {{"audio", worker_ ? 2 : 1}, {"plan", plan_.mode == GraphPlan::Pipeline ? "pipeline" : plan_.mode == GraphPlan::Fork ? "fork" : "serial"},
+                       {"serial_load", plan_.serial * 100.0f}, {"longest_thread", plan_.wall * 100.0f}}},
           {"setlist", settings_.value("setlist", json::array())},
           {"can_undo", !undo_.empty()},
           {"can_redo", !redo_.empty()},
@@ -482,6 +490,11 @@ void Engine::controlTick() {
       wizResult_ = "ok";
     }
     changed();
+  }
+  if (worker_ && cfg_.replan && ticks_ % 100 == 99) {  // about every 5 s: do the measured loads call for a different split of the work?
+    const GraphPlan np = Graph::makePlan(nodes_, true);
+    const float curWall = Graph::planWall(nodes_, plan_);
+    if (!np.sameShape(plan_) && np.wall < 0.85f * curWall) rebuild();
   }
   if (tunerOn_.load()) tunerRes_ = tuner_.analyze(a4_);
   if (++ticks_ % 40 == 0) updateMeasured();

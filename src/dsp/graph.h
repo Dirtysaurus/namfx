@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "dsp/blocks.h"
+#include "dsp/worker.h"
 
 namespace fx {
 
@@ -37,10 +38,29 @@ struct Node {
   bool isSplit() const { return block && block->def->type == "split"; }
 };
 
+// How the graph is spread over the audio thread and the worker thread (see Graph::makePlan).
+//  Serial:   everything on the audio thread.
+//  Fork:     the lighter lane of each marked split runs on the worker at the same time as the other lane (no extra latency).
+//  Pipeline: nodes [0, cut) on the audio thread, nodes [cut, N) on the worker, one block behind (one block of extra latency).
+struct GraphPlan {
+  enum Mode { Serial, Fork, Pipeline } mode = Serial;
+  int cut = 0;                 // Pipeline: first node of the second stage
+  std::vector<char> fork;      // Fork: per node, the lanes of this split run in parallel
+  float serial = 0, wall = 0;  // estimated load [fraction of a period] on one core / with this plan (the longest thread)
+  bool sameShape(const GraphPlan& o) const { return mode == o.mode && cut == o.cut && fork == o.fork; }
+};
+
 // Immutable graph built by the control thread, handed to the audio thread via Swap.
 class Graph {
  public:
-  Graph(std::vector<Node> nodes, int maxBlock, float sampleRate);
+  // worker: the second audio thread (nullptr = single threaded). The plan decides what runs on it.
+  Graph(std::vector<Node> nodes, int maxBlock, float sampleRate, Worker* worker = nullptr);
+  ~Graph();
+  // estimated load of the nodes (measured where the block has run already, else the type's estimate) and the best plan
+  static GraphPlan makePlan(const std::vector<Node>& nodes, bool haveWorker);
+  // wall load of a given plan with the current loads
+  static float planWall(const std::vector<Node>& nodes, const GraphPlan& plan);
+  const GraphPlan& plan() const { return plan_; }
   // mono input in L; output L/R (always fills both). The main chain turns stereo after
   // the first block whose type produces stereo (delay, reverb, ...) or after a stereo merge.
   // Split paths are mono. Every block's processing time is measured (Block::load).
@@ -48,9 +68,22 @@ class Graph {
   const std::vector<Node>& nodes() const { return nodes_; }
 
  private:
-  std::vector<Node> nodes_;
+  struct Scratch { std::vector<float> aL, aR, bL, bR; };
+  struct LaneJob { Graph* g; const std::vector<BlockPtr>* lane; float* L; float* R; int n; };
+  struct StageJob { Graph* g; int n; bool stereoIn, stereoOut; };
+  void runRange(int first, int last, float* L, float* R, int n, bool& stereo, Scratch& s, bool allowFork);
   void timed(Block& b, float* L, float* R, int n, bool st);
-  std::vector<float> aL_, aR_, bL_, bR_;
+  static void laneFn(void* ctx);
+  static void stageFn(void* ctx);
+
+  std::vector<Node> nodes_;
+  GraphPlan plan_;
+  Worker* w_ = nullptr;
+  bool firstCall_ = true, pipeStarted_ = false;
+  Scratch s0_, s1_;                   // stage 0 / fork lanes use s0_, the worker's pipeline stage s1_
+  std::vector<float> pipeL_, pipeR_, outL_, outR_;
+  LaneJob lane_{};
+  StageJob stage_{};
   float sr_ = 48000;
 };
 

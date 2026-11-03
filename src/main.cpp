@@ -62,6 +62,7 @@ static void usage() {
       "  --capture DEV       ALSA input, '' = no input (default: the card chosen under System -> Audio)\n"
       "  --playback DEV      ALSA output (default: the same card)\n"
       "  --periods N         ALSA periods in the buffer, 2..6 (default 2, or \"periods\" in settings audio); 3 gives more headroom against dropouts for +2.7 ms\n"
+      "  --cores N           audio threads, 1..2 (default 2 on 3+ cores: NAM and the rest of the chain run on separate cores; +1 block latency when pipelined)\n"
       "  --in-channel N      0 left, 1 right, 2 sum (default: right for the internal jack, left for USB)\n"
       "  --cpu N             CPU core for the audio thread (3)\n"
       "  --null-audio        no sound card (timer driven) - UI testing\n"
@@ -138,6 +139,7 @@ int main(int argc, char** argv) {
   std::string webDir = "web", fontDir = "fonts", lang, preset, wav, offIn, offOut, snapDir;
   int port = 80;
   bool nullAudio = false, noDisplay = false, printState = false, printCatalog = false, printLog = false, noHotspot = false;
+  int cores = -1;  // -1: 2 for live audio on a machine with 3+ cores, 1 otherwise
   bool captureGiven = false, playbackGiven = false, inChannelGiven = false, periodsGiven = false;  // explicit options beat System -> Audio
   double bench = 0;
   for (int i = 1; i < argc; ++i) {
@@ -161,6 +163,7 @@ int main(int argc, char** argv) {
     else if (a == "--periods") { ao.periods = std::clamp(std::stoi(next()), 2, 6); periodsGiven = true; }
     else if (a == "--in-channel") { ao.inChannel = std::stoi(next()); inChannelGiven = true; }
     else if (a == "--cpu") ao.cpu = std::stoi(next());
+    else if (a == "--cores") cores = std::clamp(std::stoi(next()), 1, 2);
     else if (a == "--null-audio") nullAudio = true;
     else if (a == "--no-display") noDisplay = true;
     else if (a == "--preset") preset = next();
@@ -173,6 +176,19 @@ int main(int argc, char** argv) {
     else { std::fprintf(stderr, "unknown option %s\n", a.c_str()); usage(); return 1; }
   }
 
+  {  // second audio thread: live audio on 3+ cores by default, offline/benchmark only when asked for
+    const unsigned hc = std::thread::hardware_concurrency();
+    const bool live = offIn.empty() && snapDir.empty() && bench <= 0;
+    if (cores < 0) {
+      std::ifstream sf(cfg.dataDir + "/settings.json");
+      json st = json::parse(sf, nullptr, false);
+      const int fromSettings = (!st.is_discarded() && st.is_object()) ? st.value("audio", json::object()).value("cores", 0) : 0;
+      cores = fromSettings >= 1 ? std::min(fromSettings, 2) : (live && hc >= 3 ? 2 : 1);
+    }
+    cfg.cores = cores;
+    cfg.workerCpu = (ao.cpu > 0 && hc > 2 && (int)hc > ao.cpu - 1) ? ao.cpu - 1 : -1;  // next to the audio core (3 -> 2)
+    cfg.replan = live;
+  }
   cfg.langDir = webDir + "/lang";
   if (lang.empty()) {  // persisted language choice
     std::ifstream sf(cfg.dataDir + "/settings.json");

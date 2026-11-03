@@ -44,6 +44,7 @@ set(SRC
   src/dsp/lv2_host.cpp
   src/dsp/nam_block.cpp
   src/dsp/graph.cpp
+  src/dsp/worker.cpp
   src/dsp/tuner.cpp
   src/io/wav.cpp
   src/io/audio_alsa.cpp

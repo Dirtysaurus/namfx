@@ -5,6 +5,7 @@
 #include <chrono>
 #include <functional>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -20,6 +21,9 @@ struct Config {
   bool lv2 = true;            // scan LV2 plugins (system + data/lv2)
   float sampleRate = 48000.0f;
   int block = 128;
+  int cores = 1;           // audio threads: 2 = a second thread takes part of the graph (pipeline / parallel split lanes)
+  int workerCpu = -1;      // CPU core of the second audio thread (-1 = do not pin)
+  bool replan = false;     // live audio: re-balance the threads when the measured loads change
 };
 
 struct Location {
@@ -94,6 +98,8 @@ class Engine {
   bool measuredDirty_ = false;
   unsigned ticks_ = 0;
 
+  std::unique_ptr<Worker> worker_;  // declared before graph_: the graphs wait for it when they are freed
+  GraphPlan plan_;
   Swap<Graph> graph_;
   std::vector<float> L_, R_;
 

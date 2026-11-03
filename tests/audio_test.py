@@ -7,7 +7,7 @@ Starts build/namfx with --null-audio and NAMFX_ASOUND_ROOT pointing to a fake tr
 GO Twin, ALSA loopback), then drives the WebSocket API. Needs `pip install websocket-client`.
     python3 tests/audio_test.py
 """
-import json, os, shutil, socket, subprocess, sys, tempfile, time, urllib.error, urllib.request
+import json, os, shutil, socket, struct, subprocess, sys, tempfile, time, urllib.error, urllib.request
 from pathlib import Path
 import websocket
 
@@ -299,6 +299,28 @@ def main():
         s.close()
     finally:
         r.stop()
+
+    # second audio thread: the pipelined / forked graph gives the same samples as the single threaded one
+    def render(preset, cores):
+        out = tmp / f"o_{preset}_{cores}.wav"
+        p = subprocess.run([str(EXE), "--offline", str(ROOT / "data" / "wav" / "nam_example_di.wav"), str(out), "--preset", preset,
+                            "--cores", str(cores), "--data", str(tmp / "data"), "--no-lv2"], capture_output=True, text=True, cwd=ROOT)
+        raw = out.read_bytes()
+        i = raw.find(b"data") + 8
+        n = (len(raw) - i) // 4
+        samples = struct.unpack("<%df" % n, raw[i:i + n * 4])
+        plan = [l for l in p.stderr.splitlines() if l.startswith("[graph]")][-1].split()[1]
+        return samples, plan
+
+    for preset, want, shift in (("02_Plexi_Crunch.json", "pipeline", 128 * 2), ("03_Dual_Amp.json", "fork", 0)):
+        one, plan1 = render(preset, 1)
+        two, plan2 = render(preset, 2)
+        check(plan1 == "serial", f"{preset}: one core is serial")
+        check(plan2 == want, f"{preset}: two cores use {want} (got {plan2})")
+        a = two[shift:]
+        b = one[:len(one) - shift]
+        diff = max(abs(x - y) for x, y in zip(a, b))
+        check(diff < 1e-5, f"{preset}: threaded output equals the serial one" + (" (one block later)" if shift else "") + f", max diff {diff:.2e}")
 
     # optional web password: settings.json "web_password" -> HTTP Basic auth (user namfx)
     (tmp / "data" / "settings.json").write_text(json.dumps({"web_password": "s3cret"}))
