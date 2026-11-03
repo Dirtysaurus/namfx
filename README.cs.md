@@ -204,6 +204,10 @@ namfx odpovídá na mDNS, takže web je i na `http://namfx.local` (jméno z `"ho
 - **Expression z gamepadu:** analogová páka řídí polohu wah (režim Pedál), bez wah první blok Volume. Výchozí je pravá páka Y (evdev osa 4), změna přes `"expression_axis": N` v `data/settings.json`. Na gamepadu konzole zatím neověřeno.
 - Bluetooth pedály, které se hlásí jako klávesnice nebo gamepad, nejsou podporované.
 
+## Výkon a výpadky
+
+Launcher z Ports nastaví governor `performance` a po dobu běhu namfx zastaví služby, které NAM nepotřebuje (Samba, Tailscale, cron a Bluetooth, pokud výstup není Bluetooth), a po skončení je spustí zpět (`NAMFX_KEEP_SERVICES=1` to přeskočí). Na R36S to na výpadky nemělo měřitelný vliv (konzole je jinak v klidu, asi 4 % CPU); rozhoduje zátěž řetězce. Ukázkový preset Dual Amp běží na asi 70 % jednoho jádra a dává pár xrunů za 30 s; `--periods 3` (nebo `"periods": 3` v `audio` v `settings.json`) přidá 2,7 ms bufferu. Ukázkové presety jsou vyvážené na špičku asi −3 dBFS s testovacím NAM modelem; skutečné modely se liší, použijte Normalize a Output u NAM bloku.
+
 ## Zvukový vstup
 
 **Citlivost vstupu (interní jack).** Capture gain kodeku (`Record`) nastavuje namfx sám (System → Audio input → Citlivost vstupu, výchozí 40 %, `hw_gain` v `data/settings.json`). Na 100 % je vstup jacku jen šum a stejnosměrná složka a zesilovač s velkým gainem z toho udělá hlasitý brum; namfx navíc ze vstupu odstraňuje stejnosměrnou složku. USB rozhraní mají vlastní knob.

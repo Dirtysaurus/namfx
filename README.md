@@ -203,6 +203,10 @@ namfx answers mDNS queries, so the web UI is also at `http://namfx.local` (name 
 - **Expression from the gamepad:** an analog stick drives the wah position (Pedal mode) or, without a wah, the first Volume block. Default is the right stick Y (evdev axis 4); change it with `"expression_axis": N` in `data/settings.json`. Not verified on the console's gamepad yet.
 - Bluetooth pedals that show up as a keyboard or gamepad are not supported.
 
+## Performance and dropouts
+
+The Ports launcher sets the `performance` CPU governor and, while namfx runs, stops services NAM does not need (Samba, Tailscale, cron, and the Bluetooth stack unless the output is Bluetooth) and starts them again afterwards (`NAMFX_KEEP_SERVICES=1` skips this). Measured on the R36S: this made no measurable difference to dropouts (the console is idle, about 4 % CPU); what matters is the load of the chain. The Dual Amp sample preset runs at about 70 % of one core and gives a few xruns per 30 s; `--periods 3` (or `"periods": 3` under `audio` in `settings.json`) adds 2.7 ms of buffer. The sample presets are levelled to a peak of about −3 dBFS with the test NAM model; real models differ, use the NAM block's Normalize and Output.
+
 ## Audio input
 
 **Input sensitivity (internal jack).** The codec's capture gain (`Record`) is set by namfx itself (System → Audio input → Input sensitivity, default 40 %, `hw_gain` in `data/settings.json`). At 100 % the jack input is pure noise and DC offset, and a high-gain amp turns that into a loud hum; namfx also removes DC from the input. USB interfaces keep their own gain knob.

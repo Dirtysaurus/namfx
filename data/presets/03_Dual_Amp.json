@@ -1,7 +1,7 @@
 {
   "name": "Dual Amp",
   "input_gain": 0,
-  "output_gain": -4,
+  "output_gain": -0.5,
   "chain": [
     {
       "id": "b1",

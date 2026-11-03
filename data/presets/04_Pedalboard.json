@@ -1,7 +1,7 @@
 {
   "name": "Pedalboard",
   "input_gain": 0,
-  "output_gain": -3,
+  "output_gain": -4.5,
   "chain": [
     {"id": "b1", "type": "gate", "on": true, "params": {"thresh": -62}},
     {"id": "b2", "type": "comp_squash", "on": true, "params": {"sensitivity": 4, "output": 10, "blend": 70}},

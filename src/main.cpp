@@ -61,6 +61,7 @@ static void usage() {
       "  --rate N --block N  sample rate (48000) and period (128)\n"
       "  --capture DEV       ALSA input, '' = no input (default: the card chosen under System -> Audio)\n"
       "  --playback DEV      ALSA output (default: the same card)\n"
+      "  --periods N         ALSA periods in the buffer, 2..6 (default 2, or \"periods\" in settings audio); 3 gives more headroom against dropouts for +2.7 ms\n"
       "  --in-channel N      0 left, 1 right, 2 sum (default: right for the internal jack, left for USB)\n"
       "  --cpu N             CPU core for the audio thread (3)\n"
       "  --null-audio        no sound card (timer driven) - UI testing\n"
@@ -137,7 +138,7 @@ int main(int argc, char** argv) {
   std::string webDir = "web", fontDir = "fonts", lang, preset, wav, offIn, offOut, snapDir;
   int port = 80;
   bool nullAudio = false, noDisplay = false, printState = false, printCatalog = false, printLog = false, noHotspot = false;
-  bool captureGiven = false, playbackGiven = false, inChannelGiven = false;  // explicit options beat System -> Audio
+  bool captureGiven = false, playbackGiven = false, inChannelGiven = false, periodsGiven = false;  // explicit options beat System -> Audio
   double bench = 0;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
@@ -157,6 +158,7 @@ int main(int argc, char** argv) {
     else if (a == "--block") cfg.block = std::stoi(next());
     else if (a == "--capture") { ao.capture = next(); captureGiven = true; }
     else if (a == "--playback") { ao.playback = next(); playbackGiven = true; }
+    else if (a == "--periods") { ao.periods = std::clamp(std::stoi(next()), 2, 6); periodsGiven = true; }
     else if (a == "--in-channel") { ao.inChannel = std::stoi(next()); inChannelGiven = true; }
     else if (a == "--cpu") ao.cpu = std::stoi(next());
     else if (a == "--null-audio") nullAudio = true;
@@ -285,6 +287,7 @@ int main(int argc, char** argv) {
     if (!captureGiven) o.capture = r.capture;
     if (!playbackGiven) o.playback = r.playback;
     if (!inChannelGiven) o.inChannel = r.channel;
+    if (!periodsGiven) o.periods = std::clamp(eng.settings().value("audio", json::object()).value("periods", 2), 2, 6);
     return o;
   };
   std::mutex audioMtx;  // guards audioActive, audioError (state() reads them from other threads)

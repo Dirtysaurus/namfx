@@ -1,7 +1,7 @@
 {
   "name": "Plexi Crunch",
   "input_gain": 0,
-  "output_gain": -3,
+  "output_gain": -6.5,
   "chain": [
     {
       "id": "b1",

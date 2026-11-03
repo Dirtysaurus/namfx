@@ -1,7 +1,7 @@
 {
   "name": "Clean",
   "input_gain": 0,
-  "output_gain": 0,
+  "output_gain": -3.5,
   "chain": [
     {
       "id": "b1",

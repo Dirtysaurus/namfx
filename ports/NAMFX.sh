@@ -3,6 +3,9 @@
 # EmulationStation (Ports) launcher for dArkOS.
 # Goes into /roms/ports/; the app lives in ~/namfx (ext4, for executable files).
 # Quit: Select + Start (or Start -> Quit).
+#
+# While namfx runs, services it does not need are stopped (Samba, Tailscale, cron, and the Bluetooth stack unless the
+# output is set to Bluetooth) and started again afterwards. WiFi, SSH and the web UI stay. Set NAMFX_KEEP_SERVICES=1 to skip this.
 
 APP="/home/ark/namfx"
 LOG="$APP/namfx.log"
@@ -12,6 +15,16 @@ GOV=/sys/devices/system/cpu/cpufreq/policy0/scaling_governor
 
 OLD_GOV=$(cat "$GOV" 2>/dev/null)
 echo performance | sudo tee "$GOV" > /dev/null 2>&1
+
+# stop what NAM does not need (only units that are running now; they are started again below)
+STOPPED=""
+if [ -z "$NAMFX_KEEP_SERVICES" ]; then
+  UNITS="smbd nmbd tailscaled cron"
+  grep -q '"output" *: *"bluetooth"' "$APP/data/settings.json" 2>/dev/null || UNITS="$UNITS bt-vol bluealsa bluetooth"
+  for u in $UNITS; do
+    if systemctl is-active --quiet "$u" 2>/dev/null; then sudo systemctl stop "$u" 2>/dev/null && STOPPED="$STOPPED $u"; fi
+  done
+fi
 
 # Route the RK817 input to the mic path (control name as in dArkOS; harmless if missing).
 # The sound card (USB interface or this internal codec) is chosen inside namfx: System -> Audio input.
@@ -26,6 +39,9 @@ sudo SDL_VIDEO_DRIVER=KMSDRM ./build/namfx \
 
 # files uploaded via the web were created by root - give them back to ark
 sudo chown -R ark:ark "$APP/data" "$LOG" 2>/dev/null
+
+# bring the stopped services back (reverse order: bluetooth first)
+for u in $(echo $STOPPED | tr ' ' '\n' | tac); do sudo systemctl start "$u" 2>/dev/null; done
 
 [ -n "$OLD_GOV" ] && echo "$OLD_GOV" | sudo tee "$GOV" > /dev/null 2>&1
 printf "\033c" > /dev/tty1 2>/dev/null
