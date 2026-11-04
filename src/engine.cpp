@@ -594,7 +594,7 @@ json Engine::handleLocked(const json& c) {
         {"err.unknown_type", "Unknown block type"}, {"err.net_mode", "Invalid hotspot mode"},
         {"err.net_ssid", "Network name must have 1-32 characters"}, {"err.net_password", "Password must have 8-63 characters (letters, digits, symbols)"},
         {"err.net_unavailable", "Network control not available"},
-        {"err.audio_output", "Invalid output device"}, {"err.audio_gain", "Input sensitivity must be 0-100 %"}, {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
+        {"err.audio_output", "Invalid output device"}, {"err.audio_gain", "Input sensitivity must be 0-100 %"}, {"err.audio_hwout", "Invalid console output"}, {"err.audio_device", "Invalid audio device"}, {"err.audio_channel", "Invalid input channel"}};
     auto it = en.find(code);
     std::string msg = it != en.end() ? it->second : code;
     if (!detail.empty()) msg += ": " + detail;
@@ -661,6 +661,11 @@ json Engine::handleLocked(const json& c) {
       const double g = c["hw_gain"].get<double>();
       if (g < 0 || g > 100) return fail("err.audio_gain", std::to_string(g));
       a["hw_gain"] = std::round(g);
+    }
+    if (c.contains("hw_out")) {  // where the internal codec plays: system (leave as is) | speaker | headphones | both
+      const std::string o = c["hw_out"].is_string() ? c["hw_out"].get<std::string>() : "";
+      if (o != "system" && o != "speaker" && o != "headphones" && o != "both") return fail("err.audio_hwout", o);
+      a["hw_out"] = o;
     }
     if (c.contains("output")) {  // playback to another ALSA device (Bluetooth): "same" or "pcm:<name>"
       const std::string o = c["output"].is_string() ? c["output"].get<std::string>() : "";

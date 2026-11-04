@@ -111,6 +111,14 @@
             <option value="bluetooth" data-i18n="sys.aud_out_bt">Bluetooth headphones (as in the other apps)</option>
           </select>
         </label>
+        <label class="prow" id="audHwOutRow"><span data-i18n="sys.aud_hwout">Console output</span>
+          <select id="audHwOut" style="grid-column: span 2" aria-label="Console output" data-i18n-attr="aria-label:sys.aud_hwout">
+            <option value="system" data-i18n="hwout.system">As the system sets it</option>
+            <option value="speaker" data-i18n="hwout.speaker">Speaker only</option>
+            <option value="headphones" data-i18n="hwout.headphones">Headphones jack only</option>
+            <option value="both" data-i18n="hwout.both">Speaker and headphones</option>
+          </select>
+        </label>
         <label class="prow" id="audGainRow"><span data-i18n="sys.aud_hwgain">Input sensitivity</span><input type="range" id="audGain" min="0" max="100" step="1"><output id="audGainV"></output></label>
         <div class="prow"><span data-i18n="sys.aud_signal">Signal on the input</span>
           <div style="grid-column: span 2">

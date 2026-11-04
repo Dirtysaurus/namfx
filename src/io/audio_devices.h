@@ -24,6 +24,7 @@ struct AudioChoice {
   std::string channel = "auto";  // auto | left | right | sum
   int hwGain = 40;               // internal codec only: capture sensitivity in percent (mixer control "Record")
   std::string output = "same";   // same (as the input card) | bluetooth | pcm:<ALSA name>
+  std::string hwOut = "system";  // internal codec only: system (leave as is) | speaker | headphones | both (mixer control "Playback Path")
 };
 
 struct AudioResolved {

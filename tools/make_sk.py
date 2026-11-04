@@ -153,7 +153,9 @@ SK = {
     "sys.aud_active": "Práve používa", "sys.aud_missing": "karta „{0}“ nie je pripojená", "sys.aud_manual": "Poznámka",
     "sys.aud_manual_val": "spustené s --capture / --playback / --in-channel: voľba nižšie sa ignoruje", "err.audio_device": "Neplatná zvuková karta",
     "err.audio_channel": "Neplatný vstupný kanál", "sys.aud_hwgain": "Citlivosť vstupu (hardvér)",
-    "err.audio_gain": "Citlivosť vstupu musí byť 0–100 %", "ui.cents": "centov", "ui.n_files": "{0} súborov",
+    "err.audio_gain": "Citlivosť vstupu musí byť 0–100 %",
+    "sys.aud_hwout": "Výstup konzoly", "menu.hwout": "Výstup konzoly", "hwout.system": "Podľa systému", "hwout.speaker": "Iba reproduktor",
+    "hwout.headphones": "Iba slúchadlový jack", "hwout.both": "Reproduktor aj slúchadlá", "err.audio_hwout": "Neplatný výstup konzoly", "ui.cents": "centov", "ui.n_files": "{0} súborov",
 }
 
 

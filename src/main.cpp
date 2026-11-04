@@ -296,6 +296,7 @@ int main(int argc, char** argv) {
     ch.channel = a.value("channel", "auto");
     ch.output = a.value("output", "same");
     ch.hwGain = a.value("hw_gain", 40);
+    ch.hwOut = a.value("hw_out", "system");
     return ch;
   };
   auto audioOptions = [&](const fx::AudioResolved& r) {
@@ -319,7 +320,18 @@ int main(int argc, char** argv) {
     std::string out;
     fx::runProgram({"amixer", "-c", std::to_string(r.cardIndex), "-q", "sset", "Record", "0," + std::to_string(raw)}, out, 5);  // left is unused (DC)
   };
+  // Where the internal codec sends the sound (RK817 control "Playback Path": OFF, SPK, HP, SPK_HP). The console plays on the speaker and
+  // the headphones together when the jack is not detected as headphones (e.g. behind an iRig adapter), so the choice can force one.
+  auto applyHwOut = [&](const fx::AudioResolved& r) {
+    if (nullAudio || !r.found || r.usb || r.cardIndex < 0) return;
+    const std::string o = audioChoice().hwOut;
+    const char* path = o == "speaker" ? "SPK" : o == "headphones" ? "HP" : o == "both" ? "SPK_HP" : nullptr;
+    if (!path) return;  // "system": leave the mixer alone
+    std::string out;
+    fx::runProgram({"amixer", "-c", std::to_string(r.cardIndex), "-q", "sset", "Playback Path", path}, out, 5);
+  };
   applyHwGain(audioActive);
+  applyHwOut(audioActive);
   fx::AudioDriver audio(eng, audioOptions(audioActive));
   if (!audio.start(nullAudio, err)) {
     std::fprintf(stderr, "[audio] %s - falling back to the null driver\n", err.c_str());
@@ -341,7 +353,7 @@ int main(int argc, char** argv) {
     if (!audioActive.missing.empty()) act["missing"] = audioActive.missing;
     act["bt_route"] = audioActive.btRoute;
     json st = {{"cards", cards}, {"active", act},
-               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}, {"hw_gain", a.value("hw_gain", 40)}}},
+               {"choice", {{"device", a.value("device", "auto")}, {"channel", a.value("channel", "auto")}, {"output", a.value("output", "same")}, {"hw_gain", a.value("hw_gain", 40)}, {"hw_out", a.value("hw_out", "system")}}},
                {"manual", captureGiven || playbackGiven || inChannelGiven}};
     if (!audioError.empty()) st["error"] = audioError;
     return st;
@@ -484,6 +496,7 @@ int main(int argc, char** argv) {
         }
       }
       applyHwGain(r);
+      applyHwOut(r);
       std::printf("[audio] %s\n", audio.description().c_str());
       {
         std::lock_guard<std::mutex> lk(audioMtx);

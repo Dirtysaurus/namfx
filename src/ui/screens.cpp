@@ -505,6 +505,14 @@ void Screens::press(Btn btn, bool repeat) {
           }
           case 10: cmd({{"cmd", "set_ui"}, {"view", pedals_ ? "tiles" : "pedals"}}); break;
           case 11: cycleAudio(); break;
+          case 17: {  // internal codec output: system -> speaker -> headphones -> both
+            static const char* outs[] = {"system", "speaker", "headphones", "both"};
+            const std::string cur = state_.value("audio_dev", json::object()).value("choice", json::object()).value("hw_out", std::string("system"));
+            int i = 0;
+            for (int k = 0; k < 4; ++k) if (cur == outs[k]) i = k;
+            cmd({{"cmd", "audio_set"}, {"hw_out", outs[(i + 1) % 4]}});
+            break;
+          }
           case 12: {
             static const char* modes[] = {"auto", "always", "off"};
             const std::string cur = state_.value("hotspot_cfg", json::object()).value("mode", "auto");
@@ -1055,6 +1063,7 @@ std::vector<Screens::MenuEntry> Screens::menuEntries() {
   const std::string theme = state_.value("ui", json::object()).value("theme", std::string("dark"));
   const std::string hotspot = state_.value("hotspot_cfg", json::object()).value("mode", std::string("auto"));
   const json met = state_.value("metronome", json::object());
+  const std::string hwOut = state_.value("audio_dev", json::object()).value("choice", json::object()).value("hw_out", std::string("system"));
   const std::string back = "< " + T("menu.back", "Back");
   switch (menuPage_) {
     case 1:
@@ -1066,6 +1075,7 @@ std::vector<Screens::MenuEntry> Screens::menuEntries() {
               {status_.value("playing", false) ? T("menu.wav_stop", "Stop WAV") : T("menu.wav_play", "Play WAV"), 6},
               {T("menu.live", "Live input (guitar)"), 7},
               {T("menu.audio", "Audio input") + ": " + audioLabel(), 11},
+              {T("menu.hwout", "Console output") + ": " + T("hwout." + hwOut, hwOut), 17},
               {T("menu.metronome", "Metronome") + ": " + std::to_string((int)std::lround(met.value("bpm", 100.0))) + " BPM " +
                    (met.value("on", false) ? T("menu.on", "on") : T("menu.off", "off")), 15},
               {back, 99}};

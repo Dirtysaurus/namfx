@@ -214,6 +214,8 @@ Launcher z Ports nastaví governor `performance` a po dobu běhu namfx zastaví 
 
 **Citlivost vstupu (interní jack).** Capture gain kodeku (`Record`) nastavuje namfx sám (System → Audio input → Citlivost vstupu, výchozí 40 %, `hw_gain` v `data/settings.json`). Na 100 % je vstup jacku jen šum a stejnosměrná složka a zesilovač s velkým gainem z toho udělá hlasitý brum; namfx navíc ze vstupu odstraňuje stejnosměrnou složku. USB rozhraní mají vlastní knob.
 
+**Výstup konzole (interní kodek).** R36S hraje na reproduktor i sluchátkový jack zároveň (`Playback Path` = `SPK_HP`), když jack nepozná sluchátka, třeba za redukcí s iRig. Nastaví se v System → Zvukový vstup → *Výstup konzole* (web) nebo Start → Vstup a zvuk → *Výstup konzole*: *Podle systému* (výchozí, mixer se nemění), *Jen reproduktor*, *Jen sluchátkový jack*, *Reproduktor i sluchátka* (`hw_out` v `data/settings.json`: `system|speaker|headphones|both`). Použije se při startu a při každé změně zvuku; s USB rozhraním se nepoužívá.
+
 **Bluetooth sluchátka.** Na R36S řeší Bluetooth zvuk systém (bluealsa + služba `bt-vol`, která po připojení sluchátek přesměruje ALSA `default` na kartu Loopback a přes `alsaloop` ji pošle do sluchátek). Zvolte *Výstup → Bluetooth sluchátka* a namfx hraje na `default`, jakmile jsou sluchátka připojená, a po odpojení se vrátí na zvukovou kartu. Latence je vysoká (zhruba 150–250 ms), na cvičení stačí, na hraní živě ne. Bluetooth nejdřív zapněte systémovým menu WiFi/BT; USB zvukové rozhraní i Bluetooth sdílejí jediný USB port konzole s WiFi čipem.
 
 Zvukovou kartu vyberete ve webu (Systém → Zvukový vstup) nebo na konzoli (Start → Zvukový vstup):
