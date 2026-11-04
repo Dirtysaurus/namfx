@@ -46,6 +46,10 @@ Skipped plugins:
 Plugin presets, state saving and plugin GUIs are not supported. namfx shows a generic list of
 parameters.
 
+## Tested on the R36S
+
+`guitarix-lv2` 0.46 and `x42-plugins` (Debian trixie, arm64) give 120 usable plugins; the rest is skipped by the rules above. Measured with `--bench 1` on one Cortex-A35 core (128-sample blocks): 72 plugins under 5 %, 36 at 5–15 %, 12 above 15 %. Too heavy for a live chain: the two Gx JCM800 preamps (~100 %), Tuna (~41 %), the x42 spectrum and meter displays (~17–25 %). **Gx Tape Stereo** crashes in the host, so it is skipped and listed in the load log as "crashes in the host".
+
 ## Performance
 
 LV2 plugins run in the audio thread like built-in blocks. Their load varies a lot, and some are

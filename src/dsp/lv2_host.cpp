@@ -160,6 +160,9 @@ void lv2Scan(const std::string& userDir, std::vector<std::unique_ptr<BlockDef>>&
     }
     lilv_nodes_free(req);
     if (!missingFeat.empty()) { skip("needs feature " + missingFeat); continue; }
+    // plugins that crashed (SIGSEGV) in `namfx --bench` on the R36S (guitarix 0.46.0, aarch64); a crash would end the whole app
+    static const char* crashing[] = {"http://guitarix.sourceforge.net/plugins/gxtape_st#tape"};
+    if (std::any_of(std::begin(crashing), std::end(crashing), [&](const char* s) { return uri == s; })) { skip("crashes in the host (segfault), disabled"); continue; }
     // most specific known class among all rdf:type values
     std::string cat = "util";
     bool instrument = false;

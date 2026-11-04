@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <atomic>
 #include <csignal>
@@ -90,18 +91,41 @@ static int runBench(fx::Engine& eng, double seconds) {
   json out = json::object();
   for (const fx::BlockDef* d : fx::catalogList()) {
     if (d->type == "split" || !d->fileKind.empty()) continue;
-    auto b = fx::makeBlock(d);
-    if (!b) continue;
-    b->prepare(sr, n);
-    const size_t blocks = (size_t)(seconds * sr / n);
-    double t = 0;
-    for (size_t k = 0; k < blocks; ++k) {
-      for (int i = 0; i < n; ++i) { L[i] = 0.2f * rng.next(); R[i] = L[i]; }
-      const auto t0 = std::chrono::steady_clock::now();
-      b->run(L.data(), R.data(), n, d->stereo);
-      t += std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    // every type is measured in its own process: a plugin that crashes is reported and does not stop the run
+    int fd[2];
+    if (pipe(fd) != 0) return 1;
+    std::fflush(stdout);
+    const pid_t pid = fork();
+    if (pid == 0) {
+      close(fd[0]);
+      double pct = -1;
+      auto b = fx::makeBlock(d);
+      if (b) {
+        b->prepare(sr, n);
+        const size_t blocks = (size_t)(seconds * sr / n);
+        double t = 0;
+        for (size_t k = 0; k < blocks; ++k) {
+          for (int i = 0; i < n; ++i) { L[i] = 0.2f * rng.next(); R[i] = L[i]; }
+          const auto t0 = std::chrono::steady_clock::now();
+          b->run(L.data(), R.data(), n, d->stereo);
+          t += std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        }
+        pct = 100.0 * t / (blocks * (double)n / sr);
+      }
+      if (write(fd[1], &pct, sizeof pct) < 0) _exit(2);
+      _exit(0);
     }
-    const double pct = 100.0 * t / (blocks * (double)n / sr);
+    close(fd[1]);
+    double pct = -1;
+    const ssize_t got = pid > 0 ? read(fd[0], &pct, sizeof pct) : -1;
+    close(fd[0]);
+    int status = 0;
+    if (pid > 0) waitpid(pid, &status, 0);
+    if (got != (ssize_t)sizeof pct) {
+      std::printf("%-34.34s %-6s %9s  CRASH (signal %d)  %s\n", d->type.c_str(), d->source.c_str(), "-", WIFSIGNALED(status) ? WTERMSIG(status) : 0, d->type.c_str());
+      continue;
+    }
+    if (pct < 0) continue;
     out[d->type] = std::round(pct * 100) / 100;
     std::printf("%-34.34s %-6s %9.2f\n", d->type.c_str(), d->source.c_str(), pct);
   }

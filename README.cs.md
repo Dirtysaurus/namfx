@@ -75,7 +75,8 @@ Změřeno na R36S (Cortex-A35, jedno jádro, 48 kHz, perioda 128):
 | NAM A2 **Lite** | ~22 % |
 | NAM A2 **Full** / A1 standard | v reálném čase nestíhá |
 | IR 100 ms | ~5 % |
-| Typy efektů | po 0,5–8,5 % (zobrazeno v seznamu pro přidání) |
+| Typy efektů | po 0,1–4,8 % (změřeno, všech 47 vestavěných a přibalených typů) |
+| LV2 (guitarix, x42), 120 pluginů | 72 pod 5 %, 36 mezi 5 a 15 %, 12 nad 15 % (dva Gx JCM800 preampy berou ~100 %: příliš těžké) |
 
 Na R36S používej NAM modely **A2 Lite**. Zátěž každého bloku se za běhu měří. Ukazuje se v editoru
 bloku, z ní se počítá odhad CPU celého řetězce a pro každý typ se ukládá do `data/cpu_stats.json`
@@ -97,6 +98,7 @@ cd ~ && git clone <repo> namfx     # nebo zkopíruj složku namfx
 cd ~/namfx
 ./tools/build.sh                   # apt závislosti, NeuralAmpModelerCore, build (15-30 min)
 ./tools/install.sh                 # spouštěč do /roms/ports/NAMFX.sh
+# později bez překladu: ./tools/update.sh (poslední vydání), ./tools/update.sh --check, ./tools/update.sh v0.4.0
 ```
 
 Závislosti: `g++ cmake git pkg-config libasound2-dev libsdl2-dev liblilv-dev lv2-dev` (doinstaluje `build.sh`).
@@ -152,7 +154,7 @@ Offline render bez zvukové karty, i na PC:
 --preset FILE --wav FILE           výchozí preset / WAV vstup ve smyčce
 --offline IN OUT                   render a konec
 --snapshots DIR                    PNG všech obrazovek displeje
---bench [SEC]                      změří zátěž všech typů bloků
+--bench [SEC]                      změří zátěž všech typů bloků (každý ve vlastním procesu, pád se hlásí jako CRASH)
 --print-state / --print-catalog    stav / katalog bloků (JSON) a konec
 --print-engines / --print-log      popis enginů / log načítání katalogu a konec
 ```
@@ -336,7 +338,8 @@ Ověřeno na R36S (dArkOS, Debian trixie):
 - web UI
 - naměřená zátěž (viz výše)
 - vlastní WiFi (hotspot) na RTL8723BU: síť `namfx` naběhne, telefon otevře `http://10.42.0.1` a po ukončení namfx se konzole vrátí do běžné WiFi
-- hotová binárka `v0.4.0` (z workflow `release`) se nainstaluje a spustí
+- hotová binárka `v0.4.0` (z workflow `release`) se nainstaluje a spustí; `tools/update.sh` aktualizuje z posledního vydání
+- skutečné LV2 balíčky (guitarix 0.46, x42-plugins): načte se 120 pluginů, každý typ změřen přes `--bench` (viz Výkon)
 - *Výstup konzole* přepíná `Playback Path` kodeku (ověřeno přes `amixer`, na reproduktoru zatím neposlechnuto)
 
 Ověřeno na PC:
@@ -346,10 +349,6 @@ Ověřeno na PC:
 - fuzzing API pod ASan a TSan
 - web UI v prohlížeči a snapshoty UI displeje ve všech motivech
 - stavový automat hotspotu (auto / vždy / vypnuto, ruční start/stop, přejmenování za běhu) proti simulovanému `nmcli`
-
-Ještě neověřeno na R36S:
-- skutečné LV2 balíčky (guitarix, x42)
-- naměřená zátěž nových typů efektů (ukáže se po použití)
 
 ## Licence
 

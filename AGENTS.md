@@ -49,6 +49,9 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
   - UAC1 class-compliant, Hi-Z 470 kΩ, 44.1/48 kHz, 24-bit.
   - Use `plughw:CARD=…`, because S24_3LE is not supported natively.
   - Its connector is a special 10-pin mini USB; use the stock Mini-USB→USB-A cable plus a USB-C OTG adapter.
+- **Update on a console:** `tools/update.sh` (latest release; `--check`, or a tag). It refuses while namfx runs, keeps `build/namfx.old` and writes `.release`. Verified on the test console.
+- **LV2 on the R36S (verified 2026-11-04, test console):** `apt install guitarix-lv2 x42-plugins` gives 120 loadable plugins (67 from guitarix); loads from `--bench 1`: 72 under 5 %, 36 at 5–15 %, 12 above 15 % (`gx_jcm800pre` mono/stereo ~100 %, Tuna ~41 %, Gx Studio Preamp Stereo 27 %). All 47 built-in and bundled types are at most 4.8 %.
+- **Disk:** the test console's root (btrfs) is 89 % full. The `~/.wine_*` prefixes there belong to the owner's separate game project (Gooka, LBA2 and others; they hold the games and saves). Never delete them; the owner decides.
 - **Prebuilt ARM binary:** each `v*` tag builds `namfx-<tag>-aarch64.tar.gz` (GitHub release, ~1.5 min). Installing it over `~/namfx` was verified on the main console (`namfx.old` kept as a backup). Compiling on the console with `tools/build.sh` still works, but a full rebuild takes 20+ minutes.
 - **Pasting over SSH:** paste multi-line commands one line at a time; bracketed paste broke commands before (`^[[200~`).
 
@@ -74,7 +77,7 @@ Useful flags (`./build/namfx --help`):
 --null-audio  --no-display  --preset FILE  --wav FILE
 --offline IN.wav OUT.wav [--preset X.json]   # render + prints x-realtime and core load
 --snapshots DIR      # PNG of every on-screen page (themes, pedals) and exit
---bench [SEC]        # load of every block type -> data/cpu_stats.json
+--bench [SEC]        # load of every block type (each in its own process, a crash prints CRASH); table on stdout, JSON on stderr
 --print-state / --print-catalog / --print-engines / --print-log
 ```
 
@@ -202,7 +205,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 ## 10. Open / not done (only on the owner's instruction)
 
 - **Sound test on the console** with the GO Twin: the owner is testing it now.
-- **Real LV2 packages** on the R36S (guitarix, x42) and measured loads of the new effect types.
+- **Gx Tape Stereo** (`gxtape_st#tape`, guitarix 0.46.0) segfaults in the host under `--bench` on the R36S; the cause is not known (no gdb on the console), so it is on a skip list in `lv2_host.cpp`. Gx Tape (mono) works.
 - **UI rework:**
   - The owner finds the control and menu "clunky".
   - The pedalboard view has one pedal look, told apart only by colour – to be developed later.

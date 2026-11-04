@@ -75,7 +75,8 @@ Measured on the R36S (Cortex-A35, one core, 48 kHz, period 128):
 | NAM A2 **Lite** | ~22 % |
 | NAM A2 **Full** / A1 standard | does not run in real time |
 | IR 100 ms | ~5 % |
-| Effect types | 0.5–8.5 % each (shown in the add list) |
+| Effect types | 0.1–4.8 % each (measured, all 47 built-in and bundled types) |
+| LV2 (guitarix, x42), 120 plugins | 72 under 5 %, 36 at 5–15 %, 12 above 15 % (the two Gx JCM800 preamps take ~100 %: too heavy) |
 
 Use **A2 Lite** NAM models on the R36S. Every block's load is measured while it runs. The value
 is shown in the block editor, used for the chain's CPU estimate, and remembered per type in
@@ -97,6 +98,7 @@ cd ~ && git clone <repo> namfx     # or copy the namfx folder
 cd ~/namfx
 ./tools/build.sh                   # apt deps, NeuralAmpModelerCore, build (15-30 min)
 ./tools/install.sh                 # launcher to /roms/ports/NAMFX.sh
+# later, without compiling: ./tools/update.sh (latest release), ./tools/update.sh --check, ./tools/update.sh v0.4.0
 ```
 
 Dependencies: `g++ cmake git pkg-config libasound2-dev libsdl2-dev liblilv-dev lv2-dev` (`build.sh` installs them).
@@ -152,7 +154,7 @@ Offline rendering needs no sound card and also works on a PC:
 --preset FILE --wav FILE           start preset / looped WAV input
 --offline IN OUT                   render and exit
 --snapshots DIR                    PNGs of all on-screen UI pages
---bench [SEC]                      measure the load of every block type
+--bench [SEC]                      measure the load of every block type (each in its own process; a crash is reported as CRASH)
 --print-state / --print-catalog    state / block catalog as JSON, then exit
 --print-engines / --print-log      engine reference / catalog load log, then exit
 ```
@@ -345,7 +347,8 @@ Verified on the R36S (dArkOS, Debian trixie):
 - web UI
 - measured load (see above)
 - own WiFi hotspot on the RTL8723BU: the AP `namfx` comes up, a phone opens `http://10.42.0.1`, and the console returns to its normal WiFi after namfx exits
-- release binary `v0.4.0` (built by the `release` workflow) installs and runs
+- release binary `v0.4.0` (built by the `release` workflow) installs and runs; `tools/update.sh` updates from the latest release
+- real LV2 packages (guitarix 0.46, x42-plugins): 120 plugins load, each type measured with `--bench` (see Performance)
 - *Console output* switches the codec's `Playback Path` (checked with `amixer`; not yet heard on a speaker)
 
 Verified on a PC:
@@ -355,10 +358,6 @@ Verified on a PC:
 - API fuzzing under ASan and TSan
 - web UI in a browser and on-screen UI snapshots in all themes
 - hotspot state machine (auto / always / off, manual start/stop, rename while running) against a simulated `nmcli`
-
-Not yet verified on the R36S:
-- real LV2 packages (guitarix, x42)
-- measured loads of the new effect types (shown once used)
 
 ## License
 
