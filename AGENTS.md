@@ -51,7 +51,7 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
   - Its connector is a special 10-pin mini USB; use the stock Mini-USB→USB-A cable plus a USB-C OTG adapter.
 - **Update on a console:** `tools/update.sh` (latest release; `--check`, or a tag). It refuses while namfx runs, keeps `build/namfx.old` and writes `.release`. Verified on the test console.
 - **LV2 on the R36S (verified 2026-11-04, test console):** `apt install guitarix-lv2 x42-plugins` gives 120 loadable plugins (67 from guitarix); loads from `--bench 1`: 72 under 5 %, 36 at 5–15 %, 12 above 15 % (`gx_jcm800pre` mono/stereo ~100 %, Tuna ~41 %, Gx Studio Preamp Stereo 27 %). All 47 built-in and bundled types are at most 4.8 %.
-- **Disk:** the test console's root (btrfs) is 89 % full. The `~/.wine_*` prefixes there belong to the owner's separate game project (Gooka, LBA2 and others; they hold the games and saves). Never delete them; the owner decides.
+- **Disk:** the test console's root (btrfs) is 84 % full (1.7 GB free) after the owner removed 14 of the `~/.wine_*` prefixes on 2026-11-04 (done in another session, not by this agent). `.wine`, `.wine_gooka`, `.wine_gooka_SAFE`, `.wine_dreamland` and `.wine_lba2` belong to the owner's separate game project (they hold games and saves): leave them alone.
 - **Prebuilt ARM binary:** each `v*` tag builds `namfx-<tag>-aarch64.tar.gz` (GitHub release, ~1.5 min). Installing it over `~/namfx` was verified on the main console (`namfx.old` kept as a backup). Compiling on the console with `tools/build.sh` still works, but a full rebuild takes 20+ minutes.
 - **Pasting over SSH:** paste multi-line commands one line at a time; bracketed paste broke commands before (`^[[200~`).
 
