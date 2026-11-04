@@ -12,7 +12,7 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
 - Built-in DSP effects plus data-defined effect types (JSON in `fx/`) and an optional **LV2** host (lilv).
 - The on-screen UI uses SDL2 (KMSDRM) and is driven by the gamepad. A web UI (HTTP + WebSocket) is served from the console for phones.
 - Started from EmulationStation → Ports (`ports/NAMFX.sh`). It runs only when the user launches it; it is not a system service.
-- **Version:** v0.4.0 (tag pushed 2026-11-04; the repo `Dirtysaurus/namfx` is now **public** and the `release` workflow publishes the aarch64 tarball). The main console runs v0.4.0. Sound testing with the GO Twin is next.
+- **Version:** v0.4.1 (tag pushed 2026-11-04; the repo `Dirtysaurus/namfx` is now **public** and the `release` workflow publishes the aarch64 tarball). The test console runs v0.4.1 (installed with `tools/update.sh`, verified: starts, `Gx Tape Stereo` skipped). The main console still runs v0.4.0: update it with `tools/update.sh` (copy the script over first; v0.4.0 does not contain it). The sound test with the iRig / GO Twin on the main console is next.
 
 ### License (decided)
 - The project's own code is **GPL-3.0-only** with a **commercial license** available from the author (dual licensing).
