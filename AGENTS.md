@@ -12,7 +12,7 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
 - Built-in DSP effects plus data-defined effect types (JSON in `fx/`) and an optional **LV2** host (lilv).
 - The on-screen UI uses SDL2 (KMSDRM) and is driven by the gamepad. A web UI (HTTP + WebSocket) is served from the console for phones.
 - Started from EmulationStation → Ports (`ports/NAMFX.sh`). It runs only when the user launches it; it is not a system service.
-- **Version:** v0.3.1. The owner runs v0.3 on the console and it works; v0.3.1 adds the WiFi hotspot. Sound testing is next.
+- **Version:** v0.4.0 (tag pushed 2026-11-04; the repo `Dirtysaurus/namfx` is now **public** and the `release` workflow publishes the aarch64 tarball). The main console runs v0.4.0. Sound testing with the GO Twin is next.
 
 ### License (decided)
 - The project's own code is **GPL-3.0-only** with a **commercial license** available from the author (dual licensing).
@@ -28,7 +28,10 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
 
 ## 2. Hardware and system facts (console)
 
-- **Access:** user `ark` / password `ark`, SSH at `192.168.0.72`. The app lives in `/home/ark/namfx` (ext4, so files can be executable).
+- **Access:** user `ark`, SSH by key (the owner's key `Hudy`, passphrase held by the Windows `ssh-agent`; the agent must not be asked for passwords). `sudo` works without a password. The app lives in `/home/ark/namfx` (ext4, so files can be executable).
+  - **Main console** (RTL8723BU, AP-capable): `192.168.0.80` at the last check (DHCP, may change).
+  - **Test console** (MT7601U, no AP): `192.168.0.72` at the last check, and a serial shell on the PC (`COM3`, 115200 baud, CP210x; the number changes between PCs).
+  - A PC-side HTTP server is not needed any more: install on a console with `curl -L <release url> | tar -xzf - -C ~` (the tarball has no `data/`).
 - **Memory:** the root filesystem is **btrfs**, so a swap file is impossible ("swapfile has holes").
   - For builds: enlarge zram to 1G, stop EmulationStation, use `JOBS=1`.
   - The C++ compiler (`cc1plus`) gets OOM-killed otherwise.
@@ -46,7 +49,7 @@ running **dArkOS** (Debian trixie, GCC 14, glibc).
   - UAC1 class-compliant, Hi-Z 470 kΩ, 44.1/48 kHz, 24-bit.
   - Use `plughw:CARD=…`, because S24_3LE is not supported natively.
   - Its connector is a special 10-pin mini USB; use the stock Mini-USB→USB-A cable plus a USB-C OTG adapter.
-- **No prebuilt ARM binary:** there is no CI or releases yet, so the app is **compiled on the console** with `tools/build.sh`.
+- **Prebuilt ARM binary:** each `v*` tag builds `namfx-<tag>-aarch64.tar.gz` (GitHub release, ~1.5 min). Installing it over `~/namfx` was verified on the main console (`namfx.old` kept as a backup). Compiling on the console with `tools/build.sh` still works, but a full rebuild takes 20+ minutes.
 - **Pasting over SSH:** paste multi-line commands one line at a time; bracketed paste broke commands before (`^[[200~`).
 
 ## 3. Build, run, test
@@ -137,6 +140,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
   - Other new commands: `mute {on?}`, `undo`/`redo`, `metronome {on,bpm,volume}`, `gain_wizard {on}`. Optional `web_password` in `data/settings.json` turns on HTTP Basic auth (user `namfx`). The hotspot is open until the owner sets a password. `.github/workflows/release.yml` builds an aarch64 tarball on `v*` tags (needs a public repo for the free arm runner)
   - State: `state.audio_dev` = `{cards[], active{device,label,usb,channel,capture,playback,description,missing?}, choice{device,channel}, manual, error?}` (`state.audio` is the older `{rate,block}` object)
   - Errors: `err.audio_device`, `err.audio_channel`
+  - `audio_set {hw_out: system|speaker|headphones|both}` (default `system` = leave the mixer alone): sets the internal codec's `Playback Path` (RK817 enum `OFF`, `SPK`, `HP`, `SPK_HP`) at start and on every audio change; ignored for a USB card. Error `err.audio_hwout`. Console menu: Input and sound → Console output; web: System → Audio input. Checked on the test console with `amixer`; the speaker muting itself is not heard yet (that console has no speaker).
   - `--capture` / `--playback` / `--in-channel` win over the choice (`manual: true`)
 - **Network:**
   - `net_set {mode:auto|always|off, ssid (1–32 printable), password (8–63 ASCII)}`
@@ -160,7 +164,7 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 - **Leftover AP:** an AP left from a previous run is adopted, with the name and password taken from the config.
 - **Failed start:** retries after about 80 s (`noLinkSecs_ = -60`).
 - **UI:** console menu "Own WiFi: Auto/Always/Off" (cycles); web System → Network card. The footer shows `AP ssid / pw · ip`.
-- **Verified** only against a fake `nmcli` on PC. **Not yet verified with the real chip.** The RTL8723BU in the main console reports AP mode, so there is no known blocker; the real test is open (see §10). A chip without AP just makes `nmcli … hotspot` fail: the error appears under System → Network and it is retried after about 80 s. No capability probe exists on purpose.
+- **Verified** on the main console's RTL8723BU (2026-11-04, namfx v0.4.0, mode *always*, open AP): `namfx-hotspot` came up on `10.42.0.1`, a phone loaded the web UI on port 80, and after exiting namfx the console reconnected to its WiFi (`PS5`, `192.168.0.80`) within 45 s. The state machine was also checked against a fake `nmcli` on PC. A chip without AP just makes `nmcli … hotspot` fail: the error appears under System → Network and it is retried after about 80 s. No capability probe exists on purpose.
 
 ## 7. Conventions
 
@@ -198,7 +202,6 @@ Effect types (`fx/*.json`, 41 types, documented in `docs/fx-types.md`):
 ## 10. Open / not done (only on the owner's instruction)
 
 - **Sound test on the console** with the GO Twin: the owner is testing it now.
-- **Hotspot with the real WiFi chip** (RTL8723BU, runs as root from Ports). Test: start namfx from Ports, set *Own WiFi: Always* (or press *Start hotspot now* in the web UI), connect a phone to `namfx` with the password from System → Network (or `data/settings.json`), open `http://10.42.0.1`. Check afterwards that the console reconnects to the normal WiFi.
 - **Real LV2 packages** on the R36S (guitarix, x42) and measured loads of the new effect types.
 - **UI rework:**
   - The owner finds the control and menu "clunky".

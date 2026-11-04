@@ -344,6 +344,9 @@ Verified on the R36S (dArkOS, Debian trixie):
 - gamepad
 - web UI
 - measured load (see above)
+- own WiFi hotspot on the RTL8723BU: the AP `namfx` comes up, a phone opens `http://10.42.0.1`, and the console returns to its normal WiFi after namfx exits
+- release binary `v0.4.0` (built by the `release` workflow) installs and runs
+- *Console output* switches the codec's `Playback Path` (checked with `amixer`; not yet heard on a speaker)
 
 Verified on a PC:
 - every effect type rendered offline (levels, finite output, no clipping at defaults)
@@ -356,7 +359,6 @@ Verified on a PC:
 Not yet verified on the R36S:
 - real LV2 packages (guitarix, x42)
 - measured loads of the new effect types (shown once used)
-- hotspot with the real WiFi chip
 
 ## License
 

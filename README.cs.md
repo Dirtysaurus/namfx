@@ -335,6 +335,9 @@ Ověřeno na R36S (dArkOS, Debian trixie):
 - gamepad
 - web UI
 - naměřená zátěž (viz výše)
+- vlastní WiFi (hotspot) na RTL8723BU: síť `namfx` naběhne, telefon otevře `http://10.42.0.1` a po ukončení namfx se konzole vrátí do běžné WiFi
+- hotová binárka `v0.4.0` (z workflow `release`) se nainstaluje a spustí
+- *Výstup konzole* přepíná `Playback Path` kodeku (ověřeno přes `amixer`, na reproduktoru zatím neposlechnuto)
 
 Ověřeno na PC:
 - offline render všech typů efektů (úrovně, konečné hodnoty, bez ořezu ve výchozím nastavení)
@@ -347,7 +350,6 @@ Ověřeno na PC:
 Ještě neověřeno na R36S:
 - skutečné LV2 balíčky (guitarix, x42)
 - naměřená zátěž nových typů efektů (ukáže se po použití)
-- hotspot se skutečným WiFi čipem
 
 ## Licence
 
