@@ -5,6 +5,17 @@
 A guitar multi-effect built around Neural Amp Modeler for the R36S handheld (RK3326, dArkOS).
 **Phase 1:** it runs as an app on stock dArkOS. Launch it as a port from EmulationStation or over SSH; it changes nothing in the system and runs only while you use it.
 
+## What is this?
+
+namfx turns a cheap **R36S retro handheld** (Rockchip RK3326, 640×480 screen, gamepad buttons) into a **guitar multi-effect and amp simulator**. You plug in a guitar (a USB audio interface such as the TC Helicon GO Twin, or an adapter on the console's jack), and namfx runs the signal through a chain of pedals, a **neural amp model** (NAM, a trained neural-network copy of a real amplifier) and a **cabinet impulse response** (IR, the sound of a speaker cabinet and microphone). You hear the result in headphones or on a speaker. Everything is edited in two places at once: on the console's own screen with its buttons, and in a **web page on your phone** (the console serves it over WiFi).
+
+**About the screenshots.** The images with the console look (`docs/screen/`, black screen with coloured blocks) are what appears **on the console's display**, rendered by namfx itself in 640×480 (`./build/namfx --snapshots docs/screen` regenerates them). The images with the phone look (`docs/web/`) are the **web UI** in a browser. Both show the same preset: each block of the chain (noise gate, amp, cabinet, EQ, delay, reverb...) is a tile or a pedal that you select and edit.
+
+| On the console display | In the phone browser |
+|---|---|
+| ![Console rig](docs/screen/1_rig.png) | ![Web rig](docs/web/rig.png) |
+
+
 - Effect chain with parallel routing (split → paths A/B → merge).
 - Control via a **web UI on your phone (WiFi)** and an **on-screen UI** driven by the console buttons.
   Both work at the same time, and both work without a display.

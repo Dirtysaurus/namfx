@@ -5,6 +5,17 @@
 Kytarový multiefekt s Neural Amp Modelerem pro R36S (RK3326, dArkOS).
 **Fáze 1:** aplikace se spouští z dArkOS jako port v EmulationStation nebo přes SSH. Systém nemění a běží jen tehdy, když ji spustíš.
 
+## Co to je?
+
+namfx udělá z levné retro konzole **R36S** (Rockchip RK3326, displej 640×480, herní tlačítka) **kytarový multiefekt a simulátor zesilovače**. Připojíš kytaru (USB zvukové rozhraní jako TC Helicon GO Twin, nebo redukci na jack konzole) a namfx pošle signál přes řetězec pedálů, **neuronový model zesilovače** (NAM, natrénovaná neuronová síť, která napodobuje skutečný zesilovač) a **impulzní odezvu kabinetu** (IR, zvuk reprobedny a mikrofonu). Výsledek slyšíš ve sluchátkách nebo z reproduktoru. Upravuje se na dvou místech zároveň: na displeji konzole tlačítky a ve **webové stránce na telefonu** (konzole ji nabízí přes WiFi).
+
+**K obrázkům.** Obrázky v `docs/screen/` (černá obrazovka s barevnými bloky) ukazují, co se zobrazí **na displeji konzole**. Vykresluje to samotný namfx v rozlišení 640×480 (`./build/namfx --snapshots docs/screen` je vygeneruje znovu). Obrázky v `docs/web/` jsou **webové rozhraní** v prohlížeči telefonu. Oboje ukazuje stejný preset: každý blok řetězce (noise gate, zesilovač, kabinet, EQ, delay, reverb...) je dlaždice nebo pedál, který vybereš a upravíš.
+
+| Na displeji konzole | V prohlížeči telefonu |
+|---|---|
+| ![Rig na konzoli](docs/screen/1_rig.png) | ![Rig ve webu](docs/web/rig.png) |
+
+
 - Efektový řetězec s paralelním routingem (split → větve A/B → merge).
 - Ovládání přes **web UI z telefonu (WiFi)** a přes **UI na displeji konzole** (tlačítka).
   Obojí funguje současně a obojí funguje i bez displeje.
